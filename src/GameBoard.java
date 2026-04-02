@@ -1,0 +1,128 @@
+import javafx.scene.layout.GridPane;
+import javafx.scene.layout.StackPane;
+import javafx.scene.paint.Color;
+import javafx.scene.shape.Rectangle;
+import javafx.scene.layout.Pane;
+//timelien imports
+import javafx.animation.KeyFrame;
+import javafx.animation.Timeline;
+import javafx.util.Duration;
+// list of plants to GameBoard.
+import java.util.ArrayList;
+import java.util.List;
+
+public class GameBoard extends GridPane {
+
+    private static final int ROWS = 5;
+    private static final int COLUMNS = 9;
+    private static final int CELL_WIDTH = 100;
+    private static final int CELL_HEIGHT = 100;
+    private List<Plant> plants = new ArrayList<>();    //plants stores all plant objects on the board
+    private List<Zombie> zombies = new ArrayList<>(); //zombies stores all zombie objects on the board
+
+    public GameBoard() {
+        createBoard();
+        spawnZombie();
+    }
+
+    private void createBoard() {
+        for (int row = 0; row < ROWS; row++) {
+            for (int col = 0; col < COLUMNS; col++) {
+                final int currentRow = row;
+                final int currentCol = col;
+                Rectangle cellBackground = new Rectangle(CELL_WIDTH, CELL_HEIGHT);
+                cellBackground.setFill(Color.LIGHTGREEN);
+                cellBackground.setStroke(Color.DARKGREEN);
+
+                StackPane cell = new StackPane();
+                cell.getChildren().add(cellBackground);
+                final boolean[] hasPlant = {false};
+                final Plant[] currentPlant = {null};
+
+                cell.setOnMouseClicked(e -> {
+
+                    // IF NO PLANT → PLACE ONE
+                    if (!hasPlant[0]) {
+                        Plant plant = new Plant();
+                        currentPlant[0] = plant;
+                        plants.add(plant); 
+
+                        cell.getChildren().add(plant.getView());
+                        hasPlant[0] = true;
+
+                        System.out.println("Plant placed at row " + currentRow + " col " + currentCol);
+                    }
+
+                    // IF PLANT EXISTS → DAMAGE IT
+                    else {
+                        Plant plant = currentPlant[0];
+
+                        plant.takeDamage(20);
+
+                        if (plant.isDead()) {
+                            cell.getChildren().remove(plant.getView());
+                            plants.remove(plant); //when it dies remove from list 
+                            hasPlant[0] = false;
+                            currentPlant[0] = null;
+
+                            System.out.println("Plant died and removed.");
+                        }
+                    }
+                });
+
+                add(cell, col, row);
+            }
+        }
+    }
+    public void spawnZombie() {
+        Zombie zombie = new Zombie();
+        zombies.add(zombie); // add zombie to list
+
+        zombie.getView().setTranslateX(800);
+        zombie.getView().setTranslateY(200);
+
+        getChildren().add(zombie.getView());
+        startGameLoop(zombie);
+    }
+    public void startGameLoop(Zombie zombie) {
+        Timeline timeline = new Timeline(
+            new KeyFrame(Duration.millis(50), e -> {
+                boolean colliding = checkCollisions(zombie);
+
+                if (colliding) {
+                    zombie.stopMoving();  //	if touching a plant → no movement happens
+                } else {
+                    zombie.startMoving();  //	if not touching → movement happens
+                    zombie.moveLeft();
+                }
+            })
+        );
+
+        timeline.setCycleCount(Timeline.INDEFINITE);
+        timeline.play();
+    }
+    
+    public boolean checkCollisions(Zombie zombie) {
+    for (Plant plant : plants) {
+        if (zombie.getView().localToScene(zombie.getView().getBoundsInLocal())
+                .intersects(plant.getView().localToScene(plant.getView().getBoundsInLocal()))) {
+
+            plant.takeDamage(1);
+            System.out.println("Zombie is attacking a plant!");
+
+            if (plant.isDead()) {
+                if (plant.getView().getParent() instanceof StackPane parentCell) {//if that parent is a StackPane, store it in a variable called parentCell
+                    parentCell.getChildren().remove(plant.getView());//remove the plant from the cell that actually contains it
+                }
+
+                plants.remove(plant);
+                zombie.startMoving();
+                System.out.println("Plant destroyed by zombie!");
+            }
+            return true;
+        }
+    }
+
+    return false;
+    }
+}
