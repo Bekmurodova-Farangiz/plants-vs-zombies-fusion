@@ -100,6 +100,7 @@ public class GameBoard extends GridPane {
                 for (int i = bullets.size() - 1; i >= 0; i--) {
                     Bullet bullet = bullets.get(i);
                     bullet.moveRight();
+                    checkBulletHits();
 
                     if (bullet.isOffScreen()) {
                         getChildren().remove(bullet.getView());
@@ -110,6 +111,7 @@ public class GameBoard extends GridPane {
         );
 
         timeline.setCycleCount(Timeline.INDEFINITE);
+        zombie.setMovementTimeline(timeline);
         timeline.play();
     }
     
@@ -157,5 +159,31 @@ public class GameBoard extends GridPane {
         shooter.setCycleCount(Timeline.INDEFINITE);
         plant.setShootingTimeline(shooter);
         shooter.play();
+    }
+    public void checkBulletHits() {
+        for (int i = bullets.size() - 1; i >= 0; i--) { //We loop backward through bullets so we can safely remove them.
+            Bullet bullet = bullets.get(i);
+
+            for (int j = zombies.size() - 1; j >= 0; j--) { //We also loop through zombies.
+                Zombie zombie = zombies.get(j);
+
+                if (bullet.getView().getBoundsInParent().intersects(zombie.getView().getBoundsInParent())) { //Checks whether bullet and zombie overlap visually.
+                    zombie.takeDamage(bullet.getDamage());
+
+                    getChildren().remove(bullet.getView());
+                    bullets.remove(i);
+
+                    System.out.println("Bullet hit zombie!");
+
+                    if (zombie.isDead()) {
+                        zombie.stopAllActions();
+                        getChildren().remove(zombie.getView());
+                        zombies.remove(j);
+                        System.out.println("Zombie died!");
+}
+                    break;
+                }
+            }
+        }
     }
 }

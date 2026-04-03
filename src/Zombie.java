@@ -1,11 +1,14 @@
 import javafx.scene.paint.Color;
 import javafx.scene.shape.Rectangle;
+import javafx.animation.Timeline;
+
 
 public class Zombie {
 
     private Rectangle view;
     private int health;
     private boolean moving;
+    private Timeline movementTimeline;
 
     //constructor
     public Zombie() {
@@ -36,5 +39,16 @@ public class Zombie {
 
     public void startMoving() {
         moving = true;
+    }
+    public void setMovementTimeline(Timeline movementTimeline) {
+    this.movementTimeline = movementTimeline;
+    }
+
+    public void stopAllActions() {
+        moving = false;
+
+        if (movementTimeline != null) {
+            movementTimeline.stop();
+        }
     }
 }
