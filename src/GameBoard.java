@@ -10,6 +10,7 @@ import javafx.util.Duration;
 // list of plants to GameBoard.
 import java.util.ArrayList;
 import java.util.List;
+import java.util.Random;
 
 public class GameBoard extends GridPane {
 
@@ -20,10 +21,13 @@ public class GameBoard extends GridPane {
     private List<Plant> plants = new ArrayList<>();    //plants stores all plant objects on the board
     private List<Zombie> zombies = new ArrayList<>(); //zombies stores all zombie objects on the board
     private List<Bullet> bullets = new ArrayList<>();  //bullets added to the storage
+    private boolean gameOver = false; //Global state
 
+    //Constructor
     public GameBoard() {
         createBoard();
         spawnZombie();
+        startZombieSpawner();
     }
 
     private void createBoard() {
@@ -77,11 +81,17 @@ public class GameBoard extends GridPane {
         }
     }
     public void spawnZombie() {
-        Zombie zombie = new Zombie();
+        Random random = new Random();
+        int row = random.nextInt(5); // 0 to 4 rows
+
+        Zombie zombie = new Zombie(row);
         zombies.add(zombie); // add zombie to list
 
-        zombie.getView().setTranslateX(800);
-        zombie.getView().setTranslateY(200);
+        double x = 800;
+        double y = (row * 100) + 2;  //aligns zombie properly inside that row
+
+        zombie.getView().setTranslateX(x);
+        zombie.getView().setTranslateY(y);
 
         getChildren().add(zombie.getView());
         startGameLoop(zombie);
@@ -89,6 +99,10 @@ public class GameBoard extends GridPane {
     public void startGameLoop(Zombie zombie) {
         Timeline timeline = new Timeline(
             new KeyFrame(Duration.millis(50), e -> {
+                if (gameOver) { //Guard clause
+                    zombie.stopAllActions();
+                    return;
+                }
                 boolean colliding = checkCollisions(zombie);
 
                 if (colliding) {
@@ -96,6 +110,7 @@ public class GameBoard extends GridPane {
                 } else {
                     zombie.startMoving();  //	if not touching → movement happens
                     zombie.moveLeft();
+                    checkGameOver(zombie);
                 }
                 for (int i = bullets.size() - 1; i >= 0; i--) {
                     Bullet bullet = bullets.get(i);
@@ -151,8 +166,14 @@ public class GameBoard extends GridPane {
     // auto shooting system 
     public void startShooting(Plant plant) {
         Timeline shooter = new Timeline(
-            new KeyFrame(Duration.seconds(2), e -> { //shoots every 2 seconds automatically
-                shootFromPlant(plant);
+            new KeyFrame(Duration.seconds(2), e -> {
+                if (plant.isDead() || !plants.contains(plant)) {
+                    return;
+                }
+
+                if (hasZombieInLane(plant.getRow())) {
+                    shootFromPlant(plant);
+                }
             })
         );
 
@@ -180,10 +201,37 @@ public class GameBoard extends GridPane {
                         getChildren().remove(zombie.getView());
                         zombies.remove(j);
                         System.out.println("Zombie died!");
-}
+                    }
                     break;
                 }
             }
+        }
+    }
+    public void startZombieSpawner() {
+        Timeline spawner = new Timeline(
+            new KeyFrame(Duration.seconds(5), e -> {
+                spawnZombie();
+                System.out.println("New zombie spawned!");
+            })
+        );
+
+        spawner.setCycleCount(Timeline.INDEFINITE);
+        spawner.play();
+    }
+    public boolean hasZombieInLane(int row) {
+        for (Zombie zombie : zombies) {
+            if (zombie.getRow() == row) {
+                return true;
+            }
+        }
+
+        return false;
+    }
+    public void checkGameOver(Zombie zombie) {
+        if (zombie.getView().getTranslateX() <= 0) {
+            gameOver = true;
+            zombie.stopAllActions();
+            System.out.println("GAME OVER! A zombie reached the house.");
         }
     }
 }

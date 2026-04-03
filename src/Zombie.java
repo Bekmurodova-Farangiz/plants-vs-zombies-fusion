@@ -9,13 +9,15 @@ public class Zombie {
     private int health;
     private boolean moving;
     private Timeline movementTimeline;
+    private int row;
 
     //constructor
-    public Zombie() {
+    public Zombie(int row) {
         view = new Rectangle(60, 60);
         view.setFill(Color.BROWN);
         health = 100;
         moving = true;
+        this.row = row;
     }
 
     public Rectangle getView() {
@@ -41,7 +43,7 @@ public class Zombie {
         moving = true;
     }
     public void setMovementTimeline(Timeline movementTimeline) {
-    this.movementTimeline = movementTimeline;
+        this.movementTimeline = movementTimeline;
     }
 
     public void stopAllActions() {
@@ -50,5 +52,8 @@ public class Zombie {
         if (movementTimeline != null) {
             movementTimeline.stop();
         }
+    }
+    public int getRow() {
+        return row;
     }
 }
