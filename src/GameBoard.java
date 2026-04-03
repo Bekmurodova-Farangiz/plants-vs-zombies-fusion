@@ -22,12 +22,16 @@ public class GameBoard extends GridPane {
     private List<Zombie> zombies = new ArrayList<>(); //zombies stores all zombie objects on the board
     private List<Bullet> bullets = new ArrayList<>();  //bullets added to the storage
     private boolean gameOver = false; //Global state
+    private int sunPoints = 200; //Player's starting points
+    private Timeline zombieSpawner;
+    private Timeline sunGenerator;
 
     //Constructor
     public GameBoard() {
         createBoard();
         spawnZombie();
         startZombieSpawner();
+        startSunGenerator();
     }
 
     private void createBoard() {
@@ -49,16 +53,25 @@ public class GameBoard extends GridPane {
                     // IF NO PLANT → PLACE ONE
                     if (!hasPlant[0]) {
                         Plant plant = new Plant(currentRow, currentCol);
+
+                        if (sunPoints < plant.getCost()) {
+                            System.out.println("Not enough sun points!");
+                            return;
+                        }
+
+                        sunPoints -= plant.getCost();
+                        System.out.println("Sun points left: " + sunPoints);
+
                         currentPlant[0] = plant;
-                        plants.add(plant); 
-                        startShooting(plant);
+                        plants.add(plant);
 
                         cell.getChildren().add(plant.getView());
                         hasPlant[0] = true;
 
+                        startShooting(plant);
+
                         System.out.println("Plant placed at row " + currentRow + " col " + currentCol);
                     }
-
                     // IF PLANT EXISTS → DAMAGE IT
                     else {
                         Plant plant = currentPlant[0];
@@ -208,15 +221,15 @@ public class GameBoard extends GridPane {
         }
     }
     public void startZombieSpawner() {
-        Timeline spawner = new Timeline(
+        zombieSpawner = new Timeline(
             new KeyFrame(Duration.seconds(5), e -> {
                 spawnZombie();
                 System.out.println("New zombie spawned!");
             })
         );
 
-        spawner.setCycleCount(Timeline.INDEFINITE);
-        spawner.play();
+        zombieSpawner.setCycleCount(Timeline.INDEFINITE);
+        zombieSpawner.play();
     }
     public boolean hasZombieInLane(int row) {
         for (Zombie zombie : zombies) {
@@ -231,7 +244,25 @@ public class GameBoard extends GridPane {
         if (zombie.getView().getTranslateX() <= 0) {
             gameOver = true;
             zombie.stopAllActions();
+            if (zombieSpawner != null) {
+                zombieSpawner.stop();
+            }
+            if (sunGenerator != null) {
+                sunGenerator.stop();
+            }
             System.out.println("GAME OVER! A zombie reached the house.");
         }
+    }
+
+    public void startSunGenerator() {
+        sunGenerator = new Timeline(
+            new KeyFrame(Duration.seconds(5), e -> {
+                sunPoints += 25;
+                System.out.println("Sun points: " + sunPoints);
+            })
+        );
+
+        sunGenerator.setCycleCount(Timeline.INDEFINITE);
+        sunGenerator.play();
     }
 }

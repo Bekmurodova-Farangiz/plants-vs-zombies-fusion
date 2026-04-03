@@ -9,7 +9,8 @@ public class Plant {
     private int row;
     private int col;
     private Timeline shootingTimeline;
-
+    private int cost;
+    // constructor
     public Plant(int row, int col) {
         view = new Rectangle(60, 60);
         view.setFill(Color.GREEN);
@@ -17,6 +18,7 @@ public class Plant {
         health = 100;
         this.row = row;
         this.col = col;
+        cost = 50;
     }
     public void takeDamage(int damage) {
         health -= damage;
@@ -46,6 +48,9 @@ public class Plant {
         if (shootingTimeline != null) {
             shootingTimeline.stop();
         }
+    }
+    public int getCost() {
+        return cost;
     }
     
 }
