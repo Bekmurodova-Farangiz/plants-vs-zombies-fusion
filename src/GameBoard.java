@@ -19,6 +19,7 @@ public class GameBoard extends GridPane {
     private static final int CELL_HEIGHT = 100;
     private List<Plant> plants = new ArrayList<>();    //plants stores all plant objects on the board
     private List<Zombie> zombies = new ArrayList<>(); //zombies stores all zombie objects on the board
+    private List<Bullet> bullets = new ArrayList<>();  //bullets added to the storage
 
     public GameBoard() {
         createBoard();
@@ -43,9 +44,10 @@ public class GameBoard extends GridPane {
 
                     // IF NO PLANT → PLACE ONE
                     if (!hasPlant[0]) {
-                        Plant plant = new Plant();
+                        Plant plant = new Plant(currentRow, currentCol);
                         currentPlant[0] = plant;
                         plants.add(plant); 
+                        startShooting(plant);
 
                         cell.getChildren().add(plant.getView());
                         hasPlant[0] = true;
@@ -95,6 +97,15 @@ public class GameBoard extends GridPane {
                     zombie.startMoving();  //	if not touching → movement happens
                     zombie.moveLeft();
                 }
+                for (int i = bullets.size() - 1; i >= 0; i--) {
+                    Bullet bullet = bullets.get(i);
+                    bullet.moveRight();
+
+                    if (bullet.isOffScreen()) {
+                        getChildren().remove(bullet.getView());
+                        bullets.remove(i);
+                    }
+                }
             })
         );
 
@@ -111,6 +122,7 @@ public class GameBoard extends GridPane {
             System.out.println("Zombie is attacking a plant!");
 
             if (plant.isDead()) {
+                plant.stopShooting();
                 if (plant.getView().getParent() instanceof StackPane parentCell) {//if that parent is a StackPane, store it in a variable called parentCell
                     parentCell.getChildren().remove(plant.getView());//remove the plant from the cell that actually contains it
                 }
@@ -124,5 +136,26 @@ public class GameBoard extends GridPane {
     }
 
     return false;
+    }
+    public void shootFromPlant(Plant plant) {
+        double bulletX = (plant.getCol() * 100) + 80;
+        double bulletY = (plant.getRow() * 100) + 2;
+
+        Bullet bullet = new Bullet(bulletX, bulletY);
+        bullets.add(bullet);
+
+        getChildren().add(bullet.getView());
+    }
+    // auto shooting system 
+    public void startShooting(Plant plant) {
+        Timeline shooter = new Timeline(
+            new KeyFrame(Duration.seconds(2), e -> { //shoots every 2 seconds automatically
+                shootFromPlant(plant);
+            })
+        );
+
+        shooter.setCycleCount(Timeline.INDEFINITE);
+        plant.setShootingTimeline(shooter);
+        shooter.play();
     }
 }
