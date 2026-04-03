@@ -52,7 +52,7 @@ public class GameBoard extends GridPane {
 
                     // IF NO PLANT → PLACE ONE
                     if (!hasPlant[0]) {
-                        Plant plant = new Plant(currentRow, currentCol);
+                        Plant plant = new PeaShooter(currentRow, currentCol);
 
                         if (sunPoints < plant.getCost()) {
                             System.out.println("Not enough sun points!");
@@ -179,7 +179,7 @@ public class GameBoard extends GridPane {
     // auto shooting system 
     public void startShooting(Plant plant) {
         Timeline shooter = new Timeline(
-            new KeyFrame(Duration.seconds(2), e -> {
+            new KeyFrame(Duration.seconds(plant.getShootingInterval()), e -> {
                 if (plant.isDead() || !plants.contains(plant)) {
                     return;
                 }
@@ -264,5 +264,11 @@ public class GameBoard extends GridPane {
 
         sunGenerator.setCycleCount(Timeline.INDEFINITE);
         sunGenerator.play();
+    }
+    public int getSunPoints() {
+        return sunPoints;
+    }
+    public boolean isGameOver() {
+        return gameOver;
     }
 }

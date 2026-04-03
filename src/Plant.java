@@ -10,6 +10,7 @@ public class Plant {
     private int col;
     private Timeline shootingTimeline;
     private int cost;
+    private double shootingInterval;
     // constructor
     public Plant(int row, int col) {
         view = new Rectangle(60, 60);
@@ -19,6 +20,8 @@ public class Plant {
         this.row = row;
         this.col = col;
         cost = 50;
+        shootingInterval = 2.0;
+
     }
     public void takeDamage(int damage) {
         health -= damage;
@@ -51,6 +54,12 @@ public class Plant {
     }
     public int getCost() {
         return cost;
+    }
+    public double getShootingInterval() {
+        return shootingInterval;
+    }
+    public void setShootingInterval(double shootingInterval) {
+        this.shootingInterval = shootingInterval;
     }
     
 }
