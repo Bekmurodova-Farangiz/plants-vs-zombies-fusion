@@ -10,6 +10,7 @@ public class Zombie {
     private boolean moving;
     private Timeline movementTimeline;
     private int row;
+    private double speed;
 
     //constructor
     public Zombie(int row) {
@@ -18,6 +19,7 @@ public class Zombie {
         health = 100;
         moving = true;
         this.row = row;
+        speed = 1.0;
     }
 
     public Rectangle getView() {
@@ -33,7 +35,7 @@ public class Zombie {
         return health <= 0;
     }
     public void moveLeft() {
-        view.setTranslateX(view.getTranslateX() - 2);
+        view.setTranslateX(view.getTranslateX() - speed);
     }
     public void stopMoving() {
         moving = false;
@@ -55,5 +57,11 @@ public class Zombie {
     }
     public int getRow() {
         return row;
+    }
+    public double getSpeed() {
+        return speed;
+    }
+    public void setSpeed(double speed) {
+        this.speed = speed;
     }
 }

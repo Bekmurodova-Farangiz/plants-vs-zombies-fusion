@@ -61,5 +61,7 @@ public class Plant {
     public void setShootingInterval(double shootingInterval) {
         this.shootingInterval = shootingInterval;
     }
-    
+    public void setHealth(int health) {
+        this.health = health;
+    }
 }

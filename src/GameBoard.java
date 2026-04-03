@@ -50,9 +50,14 @@ public class GameBoard extends GridPane {
 
                 cell.setOnMouseClicked(e -> {
 
-                    // IF NO PLANT → PLACE ONE
                     if (!hasPlant[0]) {
-                        Plant plant = new PeaShooter(currentRow, currentCol);
+                        Plant plant;
+
+                        if (currentCol % 2 == 0) {
+                            plant = new PeaShooter(currentRow, currentCol);
+                        } else {
+                            plant = new WallPlant(currentRow, currentCol);
+                        }
 
                         if (sunPoints < plant.getCost()) {
                             System.out.println("Not enough sun points!");
@@ -97,7 +102,13 @@ public class GameBoard extends GridPane {
         Random random = new Random();
         int row = random.nextInt(5); // 0 to 4 rows
 
-        Zombie zombie = new Zombie(row);
+        Zombie zombie;
+
+        if (Math.random() < 0.5) {
+            zombie = new Zombie(row);
+        } else {
+            zombie = new FastZombie(row);
+        }
         zombies.add(zombie); // add zombie to list
 
         double x = 800;
@@ -178,6 +189,9 @@ public class GameBoard extends GridPane {
     }
     // auto shooting system 
     public void startShooting(Plant plant) {
+        if (plant.getShootingInterval() <= 0) {
+            return;
+        }
         Timeline shooter = new Timeline(
             new KeyFrame(Duration.seconds(plant.getShootingInterval()), e -> {
                 if (plant.isDead() || !plants.contains(plant)) {
