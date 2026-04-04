@@ -5,6 +5,7 @@ public class WallPlant extends Plant {
 
         setShootingInterval(0);
         setHealth(250);
+        setCooldown(3.0);
 
         getView().setFill(javafx.scene.paint.Color.DARKGREEN);
     }

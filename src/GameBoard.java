@@ -11,6 +11,8 @@ import javafx.util.Duration;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Random;
+import java.util.HashMap;
+import java.util.Map;
 
 public class GameBoard extends GridPane {
 
@@ -25,9 +27,11 @@ public class GameBoard extends GridPane {
     private int sunPoints = 200; //Player's starting points
     private Timeline zombieSpawner;
     private Timeline sunGenerator;
-
+    private String selectedPlantType = "PeaShooter";
+    private Map<String, Long> plantCooldowns = new HashMap<>();
     //Constructor
     public GameBoard() {
+        this.setStyle("-fx-background-color: transparent;");
         createBoard();
         spawnZombie();
         startZombieSpawner();
@@ -40,8 +44,15 @@ public class GameBoard extends GridPane {
                 final int currentRow = row;
                 final int currentCol = col;
                 Rectangle cellBackground = new Rectangle(CELL_WIDTH, CELL_HEIGHT);
-                cellBackground.setFill(Color.LIGHTGREEN);
-                cellBackground.setStroke(Color.DARKGREEN);
+                cellBackground.setFill(Color.rgb(144, 238, 144, 0.25));
+                cellBackground.setStroke(Color.rgb(0, 100, 0, 0.3));
+                cellBackground.setStrokeWidth(1);
+                cellBackground.setOnMouseEntered(e -> 
+                cellBackground.setFill(Color.rgb(173, 216, 230, 0.4))
+                );
+                cellBackground.setOnMouseExited(e -> 
+                    cellBackground.setFill(Color.rgb(144, 238, 144, 0.45))
+                );
 
                 StackPane cell = new StackPane();
                 cell.getChildren().add(cellBackground);
@@ -51,9 +62,13 @@ public class GameBoard extends GridPane {
                 cell.setOnMouseClicked(e -> {
 
                     if (!hasPlant[0]) {
+                        if (isOnCooldown(selectedPlantType)) {
+                            System.out.println(selectedPlantType + " is on cooldown!");
+                            return;
+                        }
                         Plant plant;
 
-                        if (currentCol % 2 == 0) {
+                        if (selectedPlantType.equals("PeaShooter")) {
                             plant = new PeaShooter(currentRow, currentCol);
                         } else {
                             plant = new WallPlant(currentRow, currentCol);
@@ -65,6 +80,7 @@ public class GameBoard extends GridPane {
                         }
 
                         sunPoints -= plant.getCost();
+                        plantCooldowns.put(selectedPlantType, System.currentTimeMillis() + (long)(plant.getCooldown() * 1000));
                         System.out.println("Sun points left: " + sunPoints);
 
                         currentPlant[0] = plant;
@@ -284,5 +300,21 @@ public class GameBoard extends GridPane {
     }
     public boolean isGameOver() {
         return gameOver;
+    }
+    public void setSelectedPlantType(String type) {
+        this.selectedPlantType = type;
+        System.out.println("Selected plant: " + type);
+    }
+    public String getSelectedPlantType() {
+        return selectedPlantType;
+    }
+    public boolean isOnCooldown(String plantType) {
+        long currentTime = System.currentTimeMillis();
+
+        if (!plantCooldowns.containsKey(plantType)) {
+            return false;
+        }
+
+        return currentTime < plantCooldowns.get(plantType);
     }
 }

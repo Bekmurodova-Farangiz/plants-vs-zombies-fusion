@@ -11,6 +11,7 @@ public class Plant {
     private Timeline shootingTimeline;
     private int cost;
     private double shootingInterval;
+    private double cooldown;
     // constructor
     public Plant(int row, int col) {
         view = new Rectangle(60, 60);
@@ -21,6 +22,7 @@ public class Plant {
         this.col = col;
         cost = 50;
         shootingInterval = 2.0;
+        cooldown = 2.0;
 
     }
     public void takeDamage(int damage) {
@@ -63,5 +65,12 @@ public class Plant {
     }
     public void setHealth(int health) {
         this.health = health;
+    }
+    public double getCooldown() {
+        return cooldown;
+    }
+
+    public void setCooldown(double cooldown) {
+        this.cooldown = cooldown;
     }
 }
