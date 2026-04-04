@@ -63,12 +63,14 @@ public class GameApp extends Application {
         StackPane root = new StackPane();
 
         VBox layout = new VBox(topBar, board, gameOverLabel, restartButton);
+        board.setTranslateX(577);
+        board.setTranslateY(150);
         layout.setSpacing(10);
         layout.setAlignment(Pos.TOP_CENTER);
 
         root.getChildren().add(layout);
         BackgroundSize backgroundSize = new BackgroundSize(
-        100, 100, true, true, true, false
+        100, 100, true, true, false, true
 );
 
         BackgroundImage backgroundImage = new BackgroundImage(
@@ -95,10 +97,11 @@ public class GameApp extends Application {
            
         timer.start();
         
-        Scene scene = new Scene(root, 1000, 700);
+        Scene scene = new Scene(root, 1080, 780);
 
         stage.setTitle("Plantz Vs Zombiie Fusion");
         stage.setScene(scene);
+        stage.setFullScreen(true);
         stage.show();
     }
 }

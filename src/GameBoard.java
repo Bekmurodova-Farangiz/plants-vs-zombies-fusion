@@ -18,8 +18,8 @@ public class GameBoard extends GridPane {
 
     private static final int ROWS = 5;
     private static final int COLUMNS = 9;
-    private static final int CELL_WIDTH = 100;
-    private static final int CELL_HEIGHT = 100;
+    private static final int CELL_WIDTH = 105;
+    private static final int CELL_HEIGHT = 105;
     private List<Plant> plants = new ArrayList<>();    //plants stores all plant objects on the board
     private List<Zombie> zombies = new ArrayList<>(); //zombies stores all zombie objects on the board
     private List<Bullet> bullets = new ArrayList<>();  //bullets added to the storage
