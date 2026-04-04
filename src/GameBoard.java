@@ -35,7 +35,6 @@ public class GameBoard extends GridPane {
         createBoard();
         spawnZombie();
         startZombieSpawner();
-        startSunGenerator();
     }
 
     private void createBoard() {
@@ -70,8 +69,10 @@ public class GameBoard extends GridPane {
 
                         if (selectedPlantType.equals("PeaShooter")) {
                             plant = new PeaShooter(currentRow, currentCol);
-                        } else {
+                        } else if (selectedPlantType.equals("WallPlant")) {
                             plant = new WallPlant(currentRow, currentCol);
+                        } else {
+                            plant = new Sunflower(currentRow, currentCol, this);
                         }
 
                         if (sunPoints < plant.getCost()) {
@@ -316,5 +317,9 @@ public class GameBoard extends GridPane {
         }
 
         return currentTime < plantCooldowns.get(plantType);
+    }
+    public void addSunPoints(int amount) {
+        sunPoints += amount;
+        System.out.println("Sun points: " + sunPoints);
     }
 }

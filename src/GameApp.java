@@ -44,10 +44,11 @@ public class GameApp extends Application {
 
         Button peaShooterButton = new Button("PeaShooter");
         Button wallPlantButton = new Button("WallPlant");
+        Button sunflowerButton = new Button("Sunflower");
 
         peaShooterButton.setStyle("-fx-background-color: lightgreen;");
 
-        HBox topBar = new HBox(sunLabel, selectedPlantLabel, peaShooterButton, wallPlantButton);
+        HBox topBar = new HBox(sunLabel, selectedPlantLabel, peaShooterButton, wallPlantButton, sunflowerButton);
         topBar.setAlignment(Pos.CENTER);
         topBar.setSpacing(20);
 
@@ -67,6 +68,13 @@ public class GameApp extends Application {
                 board.setSelectedPlantType("WallPlant");
                 wallPlantButton.setStyle("-fx-background-color: lightgreen;");
                 peaShooterButton.setStyle("");
+            });
+            sunflowerButton.setOnAction(e2 -> {
+                board.setSelectedPlantType("Sunflower");
+
+                sunflowerButton.setStyle("-fx-background-color: lightgreen;");
+                peaShooterButton.setStyle("");
+                wallPlantButton.setStyle("");
             });
 
             VBox layout = new VBox(topBar, board, gameOverLabel, restartButton);
