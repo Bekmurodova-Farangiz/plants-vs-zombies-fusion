@@ -12,7 +12,7 @@ public class Sunflower extends Plant {
         setShootingInterval(0); // no shooting
         setCooldown(2.5);
 
-        getView().setFill(javafx.scene.paint.Color.GOLD);
+        
 
         startSunProduction(board);
     }

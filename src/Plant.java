@@ -1,10 +1,12 @@
+import javafx.animation.Timeline;
+import javafx.scene.image.Image;
+import javafx.scene.image.ImageView;
 import javafx.scene.paint.Color;
 import javafx.scene.shape.Rectangle;
-import javafx.animation.Timeline;
 
 public class Plant {
 
-    private Rectangle view;
+    private ImageView view;
     private int health;
     private int row;
     private int col;
@@ -14,8 +16,9 @@ public class Plant {
     private double cooldown;
     // constructor
     public Plant(int row, int col) {
-        view = new Rectangle(60, 60);
-        view.setFill(Color.GREEN);
+        view = new ImageView(new Image("file:src/assets/peashooter.png"));
+        view.setFitWidth(70);
+        view.setFitHeight(70);
 
         health = 100;
         this.row = row;
@@ -35,7 +38,7 @@ public class Plant {
     public boolean isDead() {
         return health <= 0;
     }
-    public Rectangle getView() {
+    public ImageView getView() {
         return view;
     }
     public int getRow() {
