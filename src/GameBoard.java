@@ -18,13 +18,13 @@ public class GameBoard extends GridPane {
 
     private static final int ROWS = 5;
     private static final int COLUMNS = 9;
-    private static final int CELL_WIDTH = 105;
-    private static final int CELL_HEIGHT = 105;
+    private static final int CELL_WIDTH = 145;
+    private static final int CELL_HEIGHT = 130;
     private List<Plant> plants = new ArrayList<>();    //plants stores all plant objects on the board
     private List<Zombie> zombies = new ArrayList<>(); //zombies stores all zombie objects on the board
     private List<Bullet> bullets = new ArrayList<>();  //bullets added to the storage
     private boolean gameOver = false; //Global state
-    private int sunPoints = 200; //Player's starting points
+    private int sunPoints = 250; //Player's starting points
     private Timeline zombieSpawner;
     private Timeline sunGenerator;
     private String selectedPlantType = "PeaShooter";
@@ -117,7 +117,7 @@ public class GameBoard extends GridPane {
     }
     public void spawnZombie() {
         Random random = new Random();
-        int row = random.nextInt(5); // 0 to 4 rows
+        int row = random.nextInt(ROWS);
 
         Zombie zombie;
 
@@ -126,10 +126,14 @@ public class GameBoard extends GridPane {
         } else {
             zombie = new FastZombie(row);
         }
-        zombies.add(zombie); // add zombie to list
 
-        double x = 800;
-        double y = (row * 100) + 2;  //aligns zombie properly inside that row
+        zombies.add(zombie);
+
+        double zombieWidth = zombie.getView().getBoundsInLocal().getWidth();
+        double zombieHeight = zombie.getView().getBoundsInLocal().getHeight();
+
+        double x = (COLUMNS * CELL_WIDTH) - zombieWidth;
+        double y = (row * CELL_HEIGHT) + 10;
 
         zombie.getView().setTranslateX(x);
         zombie.getView().setTranslateY(y);
@@ -196,8 +200,8 @@ public class GameBoard extends GridPane {
     return false;
     }
     public void shootFromPlant(Plant plant) {
-        double bulletX = (plant.getCol() * 100) + 80;
-        double bulletY = (plant.getRow() * 100) + 2;
+        double bulletX = (plant.getCol() * CELL_WIDTH) + 110;
+        double bulletY = (plant.getRow() * CELL_HEIGHT) - 13;
 
         Bullet bullet = new Bullet(bulletX, bulletY);
         bullets.add(bullet);

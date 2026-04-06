@@ -17,8 +17,8 @@ public class Plant {
     // constructor
     public Plant(int row, int col) {
         view = new ImageView(new Image("file:src/assets/peashooter.png"));
-        view.setFitWidth(70);
-        view.setFitHeight(70);
+        view.setFitWidth(110);
+        view.setFitHeight(110);
 
         health = 100;
         this.row = row;
@@ -76,4 +76,7 @@ public class Plant {
     public void setCooldown(double cooldown) {
         this.cooldown = cooldown;
     }
+    public void setPlantImage(String imagePath) {
+    view.setImage(new Image(imagePath));
+}
 }

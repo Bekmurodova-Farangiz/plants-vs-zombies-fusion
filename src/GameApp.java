@@ -78,8 +78,8 @@ public class GameApp extends Application {
             });
 
             VBox layout = new VBox(topBar, board, gameOverLabel, restartButton);
-            board.setTranslateX(577);
-            board.setTranslateY(150);
+            board.setTranslateX(180);
+            board.setTranslateY(90);
             layout.setSpacing(10);
             layout.setAlignment(Pos.TOP_CENTER);
 
@@ -108,7 +108,7 @@ public class GameApp extends Application {
         );
 
         BackgroundImage backgroundImage = new BackgroundImage(
-                new Image("file:src/assets/backgound.jpg"),
+                new Image("file:src/assets/battlezone.png"),
                 BackgroundRepeat.NO_REPEAT,
                 BackgroundRepeat.NO_REPEAT,
                 BackgroundPosition.CENTER,

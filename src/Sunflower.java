@@ -18,6 +18,7 @@ public class Sunflower extends Plant {
     }
 
     private void startSunProduction(GameBoard board) {
+        setPlantImage("file:src/assets/sunflower.png");
         sunTimeline = new Timeline(
             new KeyFrame(Duration.seconds(5), e -> {
                 if (!isDead()) {
