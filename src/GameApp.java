@@ -14,11 +14,17 @@ import javafx.scene.layout.BackgroundPosition;
 import javafx.scene.layout.BackgroundRepeat;
 import javafx.scene.layout.BackgroundSize;
 import javafx.scene.control.Button;
+import javafx.geometry.Insets;
+import javafx.scene.Group;
+import javafx.scene.layout.Pane;
 
 public class GameApp extends Application {
 
     @Override
     public void start(Stage stage) {
+
+        final double DESIGN_WIDTH = 1600;
+        final double DESIGN_HEIGHT = 900;
 
         MenuPage menu = new MenuPage();
         SettingsPage settingsPage = new SettingsPage();
@@ -54,6 +60,12 @@ public class GameApp extends Application {
 
         StackPane root = new StackPane();
 
+        Pane gameSurface = new Pane();
+        gameSurface.setPrefSize(DESIGN_WIDTH, DESIGN_HEIGHT);
+
+        Group gameGroup = new Group(gameSurface);
+        root.getChildren().add(gameGroup);
+
         menu.getStartButton().setOnAction(e -> {
             GameBoard board = new GameBoard();
             boardRef[0] = board;
@@ -78,10 +90,9 @@ public class GameApp extends Application {
             });
 
             VBox layout = new VBox(topBar, board, gameOverLabel, restartButton);
-            board.setTranslateX(180);
-            board.setTranslateY(90);
             layout.setSpacing(10);
-            layout.setAlignment(Pos.TOP_CENTER);
+            layout.setAlignment(Pos.TOP_LEFT);
+            layout.setPadding(new Insets(120, 0, 0, 160));
 
             root.getChildren().clear();
             root.getChildren().add(layout);
@@ -134,11 +145,11 @@ public class GameApp extends Application {
 
         timer.start();
 
-        Scene scene = new Scene(root, 1080, 780);
+        Scene scene = new Scene(root, 1400, 900);
 
         stage.setTitle("Plantz Vs Zombiie Fusion");
         stage.setScene(scene);
-        stage.setFullScreen(true);
+        // stage.setFullScreen(true);
         stage.show();
     }
 }

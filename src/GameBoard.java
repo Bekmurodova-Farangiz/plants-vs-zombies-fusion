@@ -17,9 +17,9 @@ import java.util.Map;
 public class GameBoard extends GridPane {
 
     private static final int ROWS = 5;
-    private static final int COLUMNS = 9;
-    private static final int CELL_WIDTH = 145;
-    private static final int CELL_HEIGHT = 130;
+    private static final int COLUMNS = 10;
+    private static final int CELL_WIDTH = 128;
+    private static final int CELL_HEIGHT = 128;
     private List<Plant> plants = new ArrayList<>();    //plants stores all plant objects on the board
     private List<Zombie> zombies = new ArrayList<>(); //zombies stores all zombie objects on the board
     private List<Bullet> bullets = new ArrayList<>();  //bullets added to the storage
