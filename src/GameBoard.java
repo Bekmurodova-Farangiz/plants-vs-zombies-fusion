@@ -2,7 +2,6 @@ import javafx.scene.layout.GridPane;
 import javafx.scene.layout.StackPane;
 import javafx.scene.paint.Color;
 import javafx.scene.shape.Rectangle;
-import javafx.scene.layout.Pane;
 //timelien imports
 import javafx.animation.KeyFrame;
 import javafx.animation.Timeline;
@@ -17,9 +16,9 @@ import java.util.Map;
 public class GameBoard extends GridPane {
 
     private static final int ROWS = 5;
-    private static final int COLUMNS = 10;
-    private static final int CELL_WIDTH = 128;
-    private static final int CELL_HEIGHT = 128;
+    private static final int COLUMNS = 9;
+    private static final int CELL_WIDTH = 173;
+    private static final int CELL_HEIGHT = 157;
     private List<Plant> plants = new ArrayList<>();    //plants stores all plant objects on the board
     private List<Zombie> zombies = new ArrayList<>(); //zombies stores all zombie objects on the board
     private List<Bullet> bullets = new ArrayList<>();  //bullets added to the storage
@@ -43,15 +42,8 @@ public class GameBoard extends GridPane {
                 final int currentRow = row;
                 final int currentCol = col;
                 Rectangle cellBackground = new Rectangle(CELL_WIDTH, CELL_HEIGHT);
-                cellBackground.setFill(Color.rgb(144, 238, 144, 0.25));
-                cellBackground.setStroke(Color.rgb(0, 100, 0, 0.3));
-                cellBackground.setStrokeWidth(1);
-                cellBackground.setOnMouseEntered(e -> 
-                cellBackground.setFill(Color.rgb(173, 216, 230, 0.4))
-                );
-                cellBackground.setOnMouseExited(e -> 
-                    cellBackground.setFill(Color.rgb(144, 238, 144, 0.45))
-                );
+                cellBackground.setFill(Color.TRANSPARENT);
+                cellBackground.setStroke(null);
 
                 StackPane cell = new StackPane();
                 cell.getChildren().add(cellBackground);
@@ -130,7 +122,7 @@ public class GameBoard extends GridPane {
         zombies.add(zombie);
 
         double zombieWidth = zombie.getView().getBoundsInLocal().getWidth();
-        double zombieHeight = zombie.getView().getBoundsInLocal().getHeight();
+        // double zombieHeight = zombie.getView().getBoundsInLocal().getHeight();
 
         double x = (COLUMNS * CELL_WIDTH) - zombieWidth;
         double y = (row * CELL_HEIGHT) + 10;
@@ -201,7 +193,7 @@ public class GameBoard extends GridPane {
     }
     public void shootFromPlant(Plant plant) {
         double bulletX = (plant.getCol() * CELL_WIDTH) + 110;
-        double bulletY = (plant.getRow() * CELL_HEIGHT) - 13;
+        double bulletY = (plant.getRow() * CELL_HEIGHT) - 25;
 
         Bullet bullet = new Bullet(bulletX, bulletY);
         bullets.add(bullet);

@@ -5,6 +5,7 @@ public class Bullet {
 
     private Rectangle view;
     private int damage;
+    
 
     public Bullet(double x, double y) {
         view = new Rectangle(20, 20);
@@ -28,6 +29,6 @@ public class Bullet {
         view.setTranslateX(view.getTranslateX() + 5);
     }
       public boolean isOffScreen() {
-        return view.getTranslateX() > 1000;
+        return view.getTranslateX() > 1530;
     }
 }

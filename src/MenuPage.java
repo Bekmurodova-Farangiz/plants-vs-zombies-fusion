@@ -23,6 +23,8 @@ public class MenuPage extends VBox {
 
         setAlignment(Pos.CENTER);
         setSpacing(20);
+        setPrefSize(1600, 900);
+        setMaxSize(1600, 900); // giving it the full game-surface size
 
         getChildren().addAll(titleLabel, startButton, settingsButton, quitButton);
     }
