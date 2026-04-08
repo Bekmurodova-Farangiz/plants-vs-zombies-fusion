@@ -9,21 +9,19 @@ public class Sunflower extends Plant {
     public Sunflower(int row, int col, GameBoard board) {
         super(row, col);
 
-        setShootingInterval(0); // no shooting
+        setShootingInterval(0);
         setCooldown(2.5);
-
-        
+        setPlantImage("file:src/assets/sunflower.png");
 
         startSunProduction(board);
     }
 
     private void startSunProduction(GameBoard board) {
-        setPlantImage("file:src/assets/sunflower.png");
         sunTimeline = new Timeline(
             new KeyFrame(Duration.seconds(5), e -> {
                 if (!isDead()) {
-                    board.addSunPoints(25);
-                    System.out.println("Sunflower produced sun! +25");
+                    board.spawnSunFromPlant(this);
+                    System.out.println("Sunflower produced sun!");
                 }
             })
         );

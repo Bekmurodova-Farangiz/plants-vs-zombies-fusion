@@ -22,12 +22,14 @@ public class GameBoard extends GridPane {
     private List<Plant> plants = new ArrayList<>();    //plants stores all plant objects on the board
     private List<Zombie> zombies = new ArrayList<>(); //zombies stores all zombie objects on the board
     private List<Bullet> bullets = new ArrayList<>();  //bullets added to the storage
+    private ArrayList<Sun> suns = new ArrayList<>();
     private boolean gameOver = false; //Global state
     private int sunPoints = 250; //Player's starting points
     private Timeline zombieSpawner;
     private Timeline sunGenerator;
     private String selectedPlantType = "PeaShooter";
     private Map<String, Long> plantCooldowns = new HashMap<>();
+
     //Constructor
     public GameBoard() {
         this.setStyle("-fx-background-color: transparent;");
@@ -159,6 +161,18 @@ public class GameBoard extends GridPane {
                         bullets.remove(i);
                     }
                 }
+                for (int i = suns.size() - 1; i >= 0; i--) {
+                    Sun sun = suns.get(i);
+
+                    sun.update();
+
+                    if (sun.hasReachedTarget()) {
+                        addSunPoints(sun.getValue());
+
+                        getChildren().remove(sun.getView());
+                        suns.remove(i);
+                    }
+                }
             })
         );
 
@@ -179,6 +193,9 @@ public class GameBoard extends GridPane {
                 plant.stopShooting();
                 if (plant.getView().getParent() instanceof StackPane parentCell) {//if that parent is a StackPane, store it in a variable called parentCell
                     parentCell.getChildren().remove(plant.getView());//remove the plant from the cell that actually contains it
+                }
+                if (plant instanceof Sunflower) {
+                    ((Sunflower) plant).stopProduction();
                 }
 
                 plants.remove(plant);
@@ -317,5 +334,17 @@ public class GameBoard extends GridPane {
     public void addSunPoints(int amount) {
         sunPoints += amount;
         System.out.println("Sun points: " + sunPoints);
+    }
+    public void spawnSunFromPlant(Plant plant) {
+        double x = (plant.getCol() * CELL_WIDTH) + (CELL_WIDTH / 2.0);
+        double y = (plant.getRow() * CELL_HEIGHT) + (CELL_HEIGHT / 2.0);
+
+        // target near the sun counter area
+        double targetX = 20;
+        double targetY = -150;
+
+        Sun sun = new Sun(x, y, targetX, targetY);
+        suns.add(sun);
+        getChildren().add(sun.getView());
     }
 }
