@@ -14,6 +14,7 @@ public class Plant {
     private int cost;
     private double shootingInterval;
     private double cooldown;
+    private int waterCost;
     // constructor
     public Plant(int row, int col) {
         view = new ImageView(new Image("file:src/assets/peashooter.png"));
@@ -26,6 +27,7 @@ public class Plant {
         cost = 50;
         shootingInterval = 2.0;
         cooldown = 2.0;
+        waterCost = 0;
 
     }
     public void takeDamage(int damage) {
@@ -78,5 +80,12 @@ public class Plant {
     }
     public void setPlantImage(String imagePath) {
     view.setImage(new Image(imagePath));
-}
+    }
+    public int getWaterCost() {
+    return waterCost;
+    }
+
+    public void setWaterCost(int waterCost) {
+        this.waterCost = waterCost;
+    }
 }

@@ -12,13 +12,14 @@ public class Sunflower extends Plant {
         setShootingInterval(0);
         setCooldown(2.5);
         setPlantImage("file:src/assets/sunflower.png");
+        setWaterCost(10);
 
         startSunProduction(board);
     }
 
     private void startSunProduction(GameBoard board) {
         sunTimeline = new Timeline(
-            new KeyFrame(Duration.seconds(5), e -> {
+            new KeyFrame(Duration.seconds(10), e -> {
                 if (!isDead()) {
                     board.spawnSunFromPlant(this);
                     System.out.println("Sunflower produced sun!");

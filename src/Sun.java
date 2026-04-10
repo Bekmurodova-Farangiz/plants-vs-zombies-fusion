@@ -1,17 +1,19 @@
-import javafx.scene.paint.Color;
-import javafx.scene.shape.Circle;
+import javafx.scene.image.Image;
+import javafx.scene.image.ImageView;
 
 public class Sun {
 
-    private Circle view;
+    private ImageView view;
     private int value;
 
     private double targetX;
     private double targetY;
 
     public Sun(double x, double y, double targetX, double targetY) {
-        view = new Circle(15);
-        view.setFill(Color.GOLD);
+        view = new ImageView(new Image("file:src/assets/sun.png"));
+
+        view.setFitWidth(90);
+        view.setFitHeight(60);
 
         view.setTranslateX(x);
         view.setTranslateY(y);
@@ -41,7 +43,7 @@ public class Sun {
         return distance < 15;
     }
 
-    public Circle getView() {
+    public ImageView getView() {
         return view;
     }
 

@@ -35,6 +35,9 @@ public class GameApp extends Application {
         Label sunLabel = new Label("Sun: 200");
         sunLabel.setStyle("-fx-font-size: 20px; -fx-text-fill: black;");
 
+        Label waterLabel = new Label("Water: 100");
+        waterLabel.setStyle("-fx-font-size: 20px; -fx-text-fill: blue;");
+
         Label selectedPlantLabel = new Label("Selected: PeaShooter");
         selectedPlantLabel.setStyle("-fx-font-size: 16px; -fx-text-fill: black;");
 
@@ -47,21 +50,23 @@ public class GameApp extends Application {
         restartButton.setStyle("-fx-font-size: 16px;");
         restartButton.setVisible(false);
 
-        // Plant selection buttons
-        Button peaShooterButton = new Button("PeaShooter");
-        Button wallPlantButton = new Button("WallPlant");
-        Button sunflowerButton = new Button("Sunflower");
+        PlantCard peaShooterCard = new PlantCard("PeaShooter", "file:src/assets/peashooter.png", 50, 20);
+        PlantCard wallPlantCard = new PlantCard("WallPlant", "file:src/assets/wallplant.png", 50, 40);
+        PlantCard sunflowerCard = new PlantCard("Sunflower", "file:src/assets/sunflower.png", 50, 10);
+        PlantCard waterPlantCard = new PlantCard("WaterPlant", "file:src/assets/waterplant1.png", 50, 0);
 
         // Default selected style
-        peaShooterButton.setStyle("-fx-background-color: lightgreen;");
+        peaShooterCard.setSelected(true);
 
         // Top bar shown during gameplay
         HBox topBar = new HBox(
                 sunLabel,
+                waterLabel,
                 selectedPlantLabel,
-                peaShooterButton,
-                wallPlantButton,
-                sunflowerButton
+                peaShooterCard,
+                wallPlantCard,
+                sunflowerCard,
+                waterPlantCard
         );
         topBar.setAlignment(Pos.CENTER_LEFT);
         topBar.setSpacing(20);
@@ -108,12 +113,12 @@ public class GameApp extends Application {
 
             // Default selected plant when game starts
             board.setSelectedPlantType("PeaShooter");
-            peaShooterButton.setStyle("-fx-background-color: lightgreen;");
-            wallPlantButton.setStyle("");
-            sunflowerButton.setStyle("");
-
+            peaShooterCard.setSelected(true);
+            wallPlantCard.setSelected(false);
+            sunflowerCard.setSelected(false);
+            waterPlantCard.setSelected(false);
             // Connect plant selection buttons to THIS board
-            setupPlantButtons(board, peaShooterButton, wallPlantButton, sunflowerButton);
+            setupPlantButtons(boardRef, peaShooterCard, wallPlantCard, sunflowerCard, waterPlantCard);
 
             // Restart should also create a fresh new board
             restartButton.setOnAction(e2 -> {
@@ -124,11 +129,12 @@ public class GameApp extends Application {
                 restartButton.setVisible(false);
 
                 newBoard.setSelectedPlantType("PeaShooter");
-                peaShooterButton.setStyle("-fx-background-color: lightgreen;");
-                wallPlantButton.setStyle("");
-                sunflowerButton.setStyle("");
+                peaShooterCard.setSelected(true);
+                wallPlantCard.setSelected(false);
+                sunflowerCard.setSelected(false);
+                waterPlantCard.setSelected(false);
 
-                setupPlantButtons(newBoard, peaShooterButton, wallPlantButton, sunflowerButton);
+                setupPlantButtons(boardRef, peaShooterCard, wallPlantCard, sunflowerCard, waterPlantCard);
 
                 VBox newGameLayout = buildGameLayout(
                         newBoard,
@@ -175,7 +181,13 @@ public class GameApp extends Application {
             public void handle(long now) {
                 if (boardRef[0] != null) {
                     sunLabel.setText("Sun: " + boardRef[0].getSunPoints());
+                    waterLabel.setText("Water: " + boardRef[0].getWaterPoints());
                     selectedPlantLabel.setText("Selected: " + boardRef[0].getSelectedPlantType());
+                    peaShooterCard.setOnCooldown(boardRef[0].getRemainingCooldownMillis("PeaShooter") > 0);
+                    wallPlantCard.setOnCooldown(boardRef[0].getRemainingCooldownMillis("WallPlant") > 0);
+                    sunflowerCard.setOnCooldown(boardRef[0].getRemainingCooldownMillis("Sunflower") > 0);
+                    waterPlantCard.setOnCooldown(boardRef[0].getRemainingCooldownMillis("WaterPlant") > 0);
+                    
 
                     if (boardRef[0].isGameOver()) {
                         gameOverLabel.setText("GAME OVER");
@@ -242,31 +254,52 @@ public class GameApp extends Application {
      * Connects the plant-selection buttons to the given board.
      * This is separated into a method so we can reuse it for Start and Restart.
      */
+    
     private void setupPlantButtons(
-            GameBoard board,
-            Button peaShooterButton,
-            Button wallPlantButton,
-            Button sunflowerButton
+            GameBoard[] boardRef,
+            PlantCard peaShooterCard,
+            PlantCard wallPlantCard,
+            PlantCard sunflowerCard,
+            PlantCard waterPlantCard
     ) {
-        peaShooterButton.setOnAction(e -> {
-            board.setSelectedPlantType("PeaShooter");
-            peaShooterButton.setStyle("-fx-background-color: lightgreen;");
-            wallPlantButton.setStyle("");
-            sunflowerButton.setStyle("");
+        peaShooterCard.setOnMouseClicked(e -> {
+            if (boardRef[0] != null) {
+                boardRef[0].setSelectedPlantType("PeaShooter");
+            }
+            peaShooterCard.setSelected(true);
+            wallPlantCard.setSelected(false);
+            sunflowerCard.setSelected(false);
+            waterPlantCard.setSelected(false);
         });
 
-        wallPlantButton.setOnAction(e -> {
-            board.setSelectedPlantType("WallPlant");
-            wallPlantButton.setStyle("-fx-background-color: lightgreen;");
-            peaShooterButton.setStyle("");
-            sunflowerButton.setStyle("");
+        wallPlantCard.setOnMouseClicked(e -> {
+            if (boardRef[0] != null) {
+                boardRef[0].setSelectedPlantType("WallPlant");
+            }
+            peaShooterCard.setSelected(false);
+            wallPlantCard.setSelected(true);
+            sunflowerCard.setSelected(false);
+            waterPlantCard.setSelected(false);
         });
 
-        sunflowerButton.setOnAction(e -> {
-            board.setSelectedPlantType("Sunflower");
-            sunflowerButton.setStyle("-fx-background-color: lightgreen;");
-            peaShooterButton.setStyle("");
-            wallPlantButton.setStyle("");
+        sunflowerCard.setOnMouseClicked(e -> {
+            if (boardRef[0] != null) {
+                boardRef[0].setSelectedPlantType("Sunflower");
+            }
+            peaShooterCard.setSelected(false);
+            wallPlantCard.setSelected(false);
+            sunflowerCard.setSelected(true);
+            waterPlantCard.setSelected(false);
+        });
+
+        waterPlantCard.setOnMouseClicked(e -> {
+            if (boardRef[0] != null) {
+                boardRef[0].setSelectedPlantType("WaterPlant");
+            }
+            peaShooterCard.setSelected(false);
+            wallPlantCard.setSelected(false);
+            sunflowerCard.setSelected(false);
+            waterPlantCard.setSelected(true);
         });
     }
 

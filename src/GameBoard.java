@@ -23,13 +23,15 @@ public class GameBoard extends GridPane {
     private List<Zombie> zombies = new ArrayList<>(); //zombies stores all zombie objects on the board
     private List<Bullet> bullets = new ArrayList<>();  //bullets added to the storage
     private ArrayList<Sun> suns = new ArrayList<>();
+    private ArrayList<WaterDrop> waterDrops = new ArrayList<>();
     private boolean gameOver = false; //Global state
     private int sunPoints = 250; //Player's starting points
+    private int waterPoints = 100;
     private Timeline zombieSpawner;
     private Timeline sunGenerator;
     private String selectedPlantType = "PeaShooter";
     private Map<String, Long> plantCooldowns = new HashMap<>();
-
+    
     //Constructor
     public GameBoard() {
         this.setStyle("-fx-background-color: transparent;");
@@ -65,16 +67,19 @@ public class GameBoard extends GridPane {
                             plant = new PeaShooter(currentRow, currentCol);
                         } else if (selectedPlantType.equals("WallPlant")) {
                             plant = new WallPlant(currentRow, currentCol);
-                        } else {
+                        } else if (selectedPlantType.equals("Sunflower")) {
                             plant = new Sunflower(currentRow, currentCol, this);
+                        } else {
+                            plant = new WaterPlant(currentRow, currentCol, this);
                         }
 
-                        if (sunPoints < plant.getCost()) {
-                            System.out.println("Not enough sun points!");
+                        if (sunPoints < plant.getCost() || waterPoints < plant.getWaterCost()) {
+                            System.out.println("Not enough resources!");
                             return;
                         }
 
                         sunPoints -= plant.getCost();
+                        waterPoints -= plant.getWaterCost();
                         plantCooldowns.put(selectedPlantType, System.currentTimeMillis() + (long)(plant.getCooldown() * 1000));
                         System.out.println("Sun points left: " + sunPoints);
 
@@ -173,6 +178,16 @@ public class GameBoard extends GridPane {
                         suns.remove(i);
                     }
                 }
+                for (int i = waterDrops.size() - 1; i >= 0; i--) {
+                    WaterDrop drop = waterDrops.get(i);
+
+                    drop.update();
+
+                    if (drop.isFinished()) {
+                        getChildren().remove(drop.getView());
+                        waterDrops.remove(i);
+                    }
+                }
             })
         );
 
@@ -196,6 +211,9 @@ public class GameBoard extends GridPane {
                 }
                 if (plant instanceof Sunflower) {
                     ((Sunflower) plant).stopProduction();
+                }
+                if (plant instanceof WaterPlant) {
+                    ((WaterPlant) plant).stopProduction();
                 }
 
                 plants.remove(plant);
@@ -347,4 +365,37 @@ public class GameBoard extends GridPane {
         suns.add(sun);
         getChildren().add(sun.getView());
     }
+    public int getWaterPoints() {
+        return waterPoints;
+    }
+    public void addWaterPoints(int amount) {
+        waterPoints += amount;
+        System.out.println("Water points: " + waterPoints);
+    }
+    public void spawnWaterDropFromPlant(Plant plant) {
+        double x = (plant.getCol() * CELL_WIDTH) + (CELL_WIDTH / 2.0);
+        double y = (plant.getRow() * CELL_HEIGHT) + (CELL_HEIGHT / 2.0);
+
+        WaterDrop drop = new WaterDrop(x, y);
+
+        // click behavior
+        drop.getView().setOnMouseClicked(e -> {
+            if (!drop.isCollected()) {
+                drop.collect();
+                addWaterPoints(drop.getValue());
+            }
+        });
+
+        waterDrops.add(drop);
+        getChildren().add(drop.getView());
+    }
+    public long getRemainingCooldownMillis(String plantType) {
+        if (!plantCooldowns.containsKey(plantType)) {
+            return 0;
+        }
+
+        long remaining = plantCooldowns.get(plantType) - System.currentTimeMillis();
+        return Math.max(0, remaining);
+    }
+
 }
