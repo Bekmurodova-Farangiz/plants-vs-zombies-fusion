@@ -13,6 +13,7 @@ import javafx.scene.layout.Pane;
 import javafx.scene.layout.StackPane;
 import javafx.scene.layout.VBox;
 import javafx.stage.Stage;
+import javafx.scene.control.ProgressBar;
 
 public class GameApp extends Application {
 
@@ -40,6 +41,12 @@ public class GameApp extends Application {
 
         Label selectedPlantLabel = new Label("Selected: PeaShooter");
         selectedPlantLabel.setStyle("-fx-font-size: 16px; -fx-text-fill: black;");
+        
+        Label waveLabel = new Label("Wave: 1/3");
+        waveLabel.setStyle("-fx-font-size: 16px; -fx-text-fill: darkred;");
+
+        ProgressBar waveProgressBar = new ProgressBar(0);
+        waveProgressBar.setPrefWidth(180);
 
         // Game-over text
         Label gameOverLabel = new Label("");
@@ -63,6 +70,8 @@ public class GameApp extends Application {
                 sunLabel,
                 waterLabel,
                 selectedPlantLabel,
+                waveLabel,
+                waveProgressBar,
                 peaShooterCard,
                 wallPlantCard,
                 sunflowerCard,
@@ -187,7 +196,8 @@ public class GameApp extends Application {
                     wallPlantCard.setOnCooldown(boardRef[0].getRemainingCooldownMillis("WallPlant") > 0);
                     sunflowerCard.setOnCooldown(boardRef[0].getRemainingCooldownMillis("Sunflower") > 0);
                     waterPlantCard.setOnCooldown(boardRef[0].getRemainingCooldownMillis("WaterPlant") > 0);
-                    
+                    waveLabel.setText("Wave: " + boardRef[0].getCurrentWave() + "/" + boardRef[0].getTotalWaves());
+                    waveProgressBar.setProgress(boardRef[0].getWaveProgress());
 
                     if (boardRef[0].isGameOver()) {
                         gameOverLabel.setText("GAME OVER");

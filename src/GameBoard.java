@@ -31,6 +31,11 @@ public class GameBoard extends GridPane {
     private Timeline sunGenerator;
     private String selectedPlantType = "PeaShooter";
     private Map<String, Long> plantCooldowns = new HashMap<>();
+    private int currentWave = 1;
+    private int totalWaves = 3;
+    private int zombiesSpawnedInWave = 0;
+    private int zombiesPerWave = 5;
+    private boolean waveInProgress = true;
     
     //Constructor
     public GameBoard() {
@@ -188,6 +193,9 @@ public class GameBoard extends GridPane {
                         waterDrops.remove(i);
                     }
                 }
+                if (isWaveCleared()) {
+                    startNextWave();
+                }
             })
         );
 
@@ -285,8 +293,19 @@ public class GameBoard extends GridPane {
     public void startZombieSpawner() {
         zombieSpawner = new Timeline(
             new KeyFrame(Duration.seconds(5), e -> {
-                spawnZombie();
-                System.out.println("New zombie spawned!");
+                if (!waveInProgress) {
+                    return;
+                }
+
+                if (zombiesSpawnedInWave < zombiesPerWave) {
+                    spawnZombie();
+                    zombiesSpawnedInWave++;
+                    System.out.println("Zombie spawned in wave " + currentWave + ": " + zombiesSpawnedInWave + "/" + zombiesPerWave);
+                } else {
+                    waveInProgress = false;
+                    zombieSpawner.stop();
+                    System.out.println("Wave " + currentWave + " spawn completed.");
+                }
             })
         );
 
@@ -396,6 +415,36 @@ public class GameBoard extends GridPane {
 
         long remaining = plantCooldowns.get(plantType) - System.currentTimeMillis();
         return Math.max(0, remaining);
+    }
+    public boolean isWaveCleared() {
+        return !waveInProgress && zombies.isEmpty();
+    }
+    public void startNextWave() {
+        if (currentWave >= totalWaves) {
+            System.out.println("All waves completed!");
+            return;
+        }
+
+        currentWave++;
+        zombiesSpawnedInWave = 0;
+        zombiesPerWave += 3; // each wave gets bigger
+        waveInProgress = true;
+
+        System.out.println("Starting wave " + currentWave);
+        startZombieSpawner();
+    }
+    public int getCurrentWave() {
+        return currentWave;
+    }
+
+    public int getTotalWaves() {
+        return totalWaves;
+    }
+
+    public double getWaveProgress() {
+        double completedWaves = currentWave - 1;
+        double currentWavePart = (double) zombiesSpawnedInWave / zombiesPerWave;
+        return (completedWaves + currentWavePart) / totalWaves;
     }
 
 }
