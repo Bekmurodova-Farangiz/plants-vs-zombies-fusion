@@ -36,4 +36,9 @@ public class Sunflower extends Plant {
             sunTimeline.stop();
         }
     }
+    public void resumeProduction(GameBoard board) {
+        if (sunTimeline == null || sunTimeline.getStatus() != Timeline.Status.RUNNING) {
+            startSunProduction(board);
+        }
+    }
 }

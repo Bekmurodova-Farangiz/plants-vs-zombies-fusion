@@ -70,4 +70,15 @@ public class Zombie {
     public void setZombieImage(String imagePath) {
         view.setImage(new Image(imagePath));
     }
+    public void pauseActions() {
+        if (movementTimeline != null) {
+            movementTimeline.pause();
+        }
+    }
+
+    public void resumeActions() {
+        if (movementTimeline != null) {
+            movementTimeline.play();
+        }
+    }
 }

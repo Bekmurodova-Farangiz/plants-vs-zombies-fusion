@@ -28,6 +28,7 @@ public class GameApp extends Application {
         MenuPage menu = new MenuPage();
         SettingsPage settingsPage = new SettingsPage();
 
+
         // We keep the current GameBoard inside an array so inner lambdas can modify it.
         // This is a common trick in Java when lambdas need a mutable reference.
         final GameBoard[] boardRef = {null};
@@ -48,6 +49,18 @@ public class GameApp extends Application {
         ProgressBar waveProgressBar = new ProgressBar(0);
         waveProgressBar.setPrefWidth(180);
 
+        Label flag1 = new Label("⚑");
+        Label flag2 = new Label("⚑");
+        Label flag3 = new Label("⚑");
+
+        flag1.setStyle("-fx-font-size: 18px; -fx-text-fill: gray;");
+        flag2.setStyle("-fx-font-size: 18px; -fx-text-fill: gray;");
+        flag3.setStyle("-fx-font-size: 18px; -fx-text-fill: gray;");
+
+        HBox flagBar = new HBox(flag1, flag2, flag3);
+        flagBar.setSpacing(55);
+        flagBar.setAlignment(Pos.CENTER_LEFT);
+
         // Game-over text
         Label gameOverLabel = new Label("");
         gameOverLabel.setStyle("-fx-font-size: 30px; -fx-text-fill: red;");
@@ -56,6 +69,16 @@ public class GameApp extends Application {
         Button restartButton = new Button("Restart");
         restartButton.setStyle("-fx-font-size: 16px;");
         restartButton.setVisible(false);
+
+        Button pauseButton = new Button("Pause");
+        pauseButton.setStyle("-fx-font-size: 16px;");
+
+        Button resumeButton = new Button("Resume");
+        resumeButton.setStyle("-fx-font-size: 16px;");
+        resumeButton.setVisible(false);
+
+        Button mainMenuButton = new Button("Main Menu");
+        mainMenuButton.setStyle("-fx-font-size: 16px;");
 
         PlantCard peaShooterCard = new PlantCard("PeaShooter", "file:src/assets/peashooter.png", 50, 20);
         PlantCard wallPlantCard = new PlantCard("WallPlant", "file:src/assets/wallplant.png", 50, 40);
@@ -66,12 +89,14 @@ public class GameApp extends Application {
         peaShooterCard.setSelected(true);
 
         // Top bar shown during gameplay
+        VBox waveBox = new VBox(waveLabel, waveProgressBar, flagBar);
+        waveBox.setSpacing(4);
+
         HBox topBar = new HBox(
                 sunLabel,
                 waterLabel,
                 selectedPlantLabel,
-                waveLabel,
-                waveProgressBar,
+                waveBox,
                 peaShooterCard,
                 wallPlantCard,
                 sunflowerCard,
@@ -144,12 +169,16 @@ public class GameApp extends Application {
                 waterPlantCard.setSelected(false);
 
                 setupPlantButtons(boardRef, peaShooterCard, wallPlantCard, sunflowerCard, waterPlantCard);
+                
 
                 VBox newGameLayout = buildGameLayout(
                         newBoard,
                         topBar,
                         gameOverLabel,
                         restartButton,
+                        pauseButton,
+                        resumeButton,
+                        mainMenuButton,
                         DESIGN_WIDTH,
                         DESIGN_HEIGHT
                 );
@@ -162,6 +191,9 @@ public class GameApp extends Application {
                     topBar,
                     gameOverLabel,
                     restartButton,
+                    pauseButton,
+                    resumeButton,
+                    mainMenuButton,
                     DESIGN_WIDTH,
                     DESIGN_HEIGHT
             );
@@ -189,6 +221,11 @@ public class GameApp extends Application {
             @Override
             public void handle(long now) {
                 if (boardRef[0] != null) {
+                    int currentWave = boardRef[0].getCurrentWave();
+
+                    flag1.setStyle("-fx-font-size: 18px; -fx-text-fill: " + (currentWave >= 1 ? "red;" : "gray;"));
+                    flag2.setStyle("-fx-font-size: 18px; -fx-text-fill: " + (currentWave >= 2 ? "red;" : "gray;"));
+                    flag3.setStyle("-fx-font-size: 18px; -fx-text-fill: " + (currentWave >= 3 ? "red;" : "gray;"));
                     sunLabel.setText("Sun: " + boardRef[0].getSunPoints());
                     waterLabel.setText("Water: " + boardRef[0].getWaterPoints());
                     selectedPlantLabel.setText("Selected: " + boardRef[0].getSelectedPlantType());
@@ -204,6 +241,34 @@ public class GameApp extends Application {
                         restartButton.setVisible(true);
                     }
                 }
+                pauseButton.setOnAction(e -> {
+                    if (boardRef[0] != null) {
+                        boardRef[0].pauseGame();
+                        pauseButton.setVisible(false);
+                        resumeButton.setVisible(true);
+                    }
+                });
+
+                resumeButton.setOnAction(e -> {
+                    if (boardRef[0] != null) {
+                        boardRef[0].resumeGame();
+                        pauseButton.setVisible(true);
+                        resumeButton.setVisible(false);
+                    }
+                });
+                mainMenuButton.setOnAction(e -> {
+                    if (boardRef[0] != null) {
+                        boardRef[0].setPaused(false);
+                        boardRef[0] = null;
+                    }
+
+                    pauseButton.setVisible(true);
+                    resumeButton.setVisible(false);
+                    restartButton.setVisible(false);
+                    gameOverLabel.setText("");
+
+                    contentLayer.getChildren().setAll(menu);
+                });
             }
         };
         timer.start();
@@ -238,21 +303,26 @@ public class GameApp extends Application {
             HBox topBar,
             Label gameOverLabel,
             Button restartButton,
+            Button pauseButton,
+            Button resumeButton,
+            Button mainMenuButton,
             double designWidth,
             double designHeight
     ) {
-        // battlefieldPane holds the board in exact coordinates over the background area
+
         Pane battlefieldPane = new Pane();
         battlefieldPane.setPrefSize(1600, 700);
 
-        // These coordinates place the board over the playable tile area.
-        // You can fine-tune them later if needed.
         board.setLayoutX(40);
         board.setLayoutY(55);
 
         battlefieldPane.getChildren().add(board);
 
-        VBox layout = new VBox(topBar, battlefieldPane, gameOverLabel, restartButton);
+        HBox controlBar = new HBox(pauseButton, resumeButton, restartButton, mainMenuButton);
+        controlBar.setSpacing(10);
+        controlBar.setAlignment(Pos.CENTER_LEFT);
+
+        VBox layout = new VBox(topBar, battlefieldPane, gameOverLabel, controlBar);
         layout.setSpacing(10);
         layout.setAlignment(Pos.TOP_LEFT);
         layout.setPadding(new Insets(0, 0, 0, 0));

@@ -55,4 +55,19 @@ public class WaterPlant extends Plant {
             animationTimeline.stop();
         }
     }
+    public void resumeProduction(GameBoard board) {
+        if (waterTimeline == null || waterTimeline.getStatus() != Timeline.Status.RUNNING) {
+            waterTimeline = new Timeline(
+                new KeyFrame(Duration.seconds(5), e -> {
+                    if (!isDead()) {
+                        board.spawnWaterDropFromPlant(this);
+                        System.out.println("WaterPlant produced water!");
+                    }
+                })
+            );
+
+            waterTimeline.setCycleCount(Timeline.INDEFINITE);
+            waterTimeline.play();
+        }
+    }
 }

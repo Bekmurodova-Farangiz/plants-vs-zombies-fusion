@@ -36,6 +36,8 @@ public class GameBoard extends GridPane {
     private int zombiesSpawnedInWave = 0;
     private int zombiesPerWave = 5;
     private boolean waveInProgress = true;
+    private Timeline globalLoop;
+    private boolean paused = false;
     
     //Constructor
     public GameBoard() {
@@ -43,6 +45,7 @@ public class GameBoard extends GridPane {
         createBoard();
         spawnZombie();
         startZombieSpawner();
+        startGlobalLoop();
     }
 
     private void createBoard() {
@@ -60,6 +63,9 @@ public class GameBoard extends GridPane {
                 final Plant[] currentPlant = {null};
 
                 cell.setOnMouseClicked(e -> {
+                    if (paused || gameOver) {
+                        return;
+                    }
 
                     if (!hasPlant[0]) {
                         if (isOnCooldown(selectedPlantType)) {
@@ -161,41 +167,6 @@ public class GameBoard extends GridPane {
                     zombie.moveLeft();
                     checkGameOver(zombie);
                 }
-                for (int i = bullets.size() - 1; i >= 0; i--) {
-                    Bullet bullet = bullets.get(i);
-                    bullet.moveRight();
-                    checkBulletHits();
-
-                    if (bullet.isOffScreen()) {
-                        getChildren().remove(bullet.getView());
-                        bullets.remove(i);
-                    }
-                }
-                for (int i = suns.size() - 1; i >= 0; i--) {
-                    Sun sun = suns.get(i);
-
-                    sun.update();
-
-                    if (sun.hasReachedTarget()) {
-                        addSunPoints(sun.getValue());
-
-                        getChildren().remove(sun.getView());
-                        suns.remove(i);
-                    }
-                }
-                for (int i = waterDrops.size() - 1; i >= 0; i--) {
-                    WaterDrop drop = waterDrops.get(i);
-
-                    drop.update();
-
-                    if (drop.isFinished()) {
-                        getChildren().remove(drop.getView());
-                        waterDrops.remove(i);
-                    }
-                }
-                if (isWaveCleared()) {
-                    startNextWave();
-                }
             })
         );
 
@@ -293,6 +264,9 @@ public class GameBoard extends GridPane {
     public void startZombieSpawner() {
         zombieSpawner = new Timeline(
             new KeyFrame(Duration.seconds(5), e -> {
+                if (paused || gameOver) {
+                    return;
+                }
                 if (!waveInProgress) {
                     return;
                 }
@@ -445,6 +419,121 @@ public class GameBoard extends GridPane {
         double completedWaves = currentWave - 1;
         double currentWavePart = (double) zombiesSpawnedInWave / zombiesPerWave;
         return (completedWaves + currentWavePart) / totalWaves;
+    }
+    public void startGlobalLoop() {
+        globalLoop = new Timeline(
+            new KeyFrame(Duration.millis(50), e -> {
+
+                if (paused || gameOver) {
+                    return;
+                }
+
+                // Update bullets
+                for (int i = bullets.size() - 1; i >= 0; i--) {
+                    Bullet bullet = bullets.get(i);
+                    bullet.moveRight();
+                    checkBulletHits();
+
+                    if (bullet.isOffScreen()) {
+                        getChildren().remove(bullet.getView());
+                        bullets.remove(i);
+                    }
+                }
+
+                // Update suns
+                for (int i = suns.size() - 1; i >= 0; i--) {
+                    Sun sun = suns.get(i);
+
+                    sun.update();
+
+                    if (sun.hasReachedTarget()) {
+                        addSunPoints(sun.getValue());
+                        getChildren().remove(sun.getView());
+                        suns.remove(i);
+                    }
+                }
+
+                // Update water drops
+                for (int i = waterDrops.size() - 1; i >= 0; i--) {
+                    WaterDrop drop = waterDrops.get(i);
+
+                    drop.update();
+
+                    if (drop.isFinished()) {
+                        getChildren().remove(drop.getView());
+                        waterDrops.remove(i);
+                    }
+                }
+
+                // Check if wave ended and next wave should start
+                if (isWaveCleared()) {
+                    startNextWave();
+                }
+            })
+        );
+
+        globalLoop.setCycleCount(Timeline.INDEFINITE);
+        globalLoop.play();
+    }
+    public boolean isPaused() {
+        return paused;
+    }
+
+    public void setPaused(boolean paused) {
+        this.paused = paused;
+    }
+    public void pauseGame() {
+        paused = true;
+
+        if (globalLoop != null) {
+            globalLoop.pause();
+        }
+
+        if (zombieSpawner != null) {
+            zombieSpawner.pause();
+        }
+
+        for (Plant plant : plants) {
+            plant.stopShooting();
+
+            if (plant instanceof Sunflower) {
+                ((Sunflower) plant).stopProduction();
+            }
+
+            if (plant instanceof WaterPlant) {
+                ((WaterPlant) plant).stopProduction();
+            }
+        }
+        for (Zombie zombie : zombies) {
+            zombie.pauseActions();
+        }
+    }
+
+    public void resumeGame() {
+        paused = false;
+
+        if (globalLoop != null) {
+            globalLoop.play();
+        }
+
+        if (zombieSpawner != null && waveInProgress) {
+            zombieSpawner.play();
+        }
+
+        for (Plant plant : plants) {
+            startShooting(plant);
+
+            if (plant instanceof Sunflower) {
+                ((Sunflower) plant).resumeProduction(this);
+            }
+
+            if (plant instanceof WaterPlant) {
+                ((WaterPlant) plant).resumeProduction(this);
+            }
+        }
+        for (Zombie zombie : zombies) {
+            zombie.resumeActions();
+        }
     }
 
 }
