@@ -35,16 +35,16 @@ public class GameApp extends Application {
 
         // Top HUD labels
         Label sunLabel = new Label("Sun: 200");
-        sunLabel.setStyle("-fx-font-size: 20px; -fx-text-fill: black;");
+        sunLabel.setStyle("-fx-font-size: 20px; -fx-text-fill: yellow;");
 
         Label waterLabel = new Label("Water: 100");
-        waterLabel.setStyle("-fx-font-size: 20px; -fx-text-fill: blue;");
+        waterLabel.setStyle("-fx-font-size: 20px; -fx-text-fill: lightblue;");
 
         Label selectedPlantLabel = new Label("Selected: PeaShooter");
         selectedPlantLabel.setStyle("-fx-font-size: 16px; -fx-text-fill: black;");
         
         Label waveLabel = new Label("Wave: 1/3");
-        waveLabel.setStyle("-fx-font-size: 16px; -fx-text-fill: darkred;");
+        waveLabel.setStyle("-fx-font-size: 16px; -fx-text-fill: pink;");
 
         ProgressBar waveProgressBar = new ProgressBar(0);
         waveProgressBar.setPrefWidth(180);
@@ -314,7 +314,7 @@ public class GameApp extends Application {
         battlefieldPane.setPrefSize(1600, 700);
 
         board.setLayoutX(40);
-        board.setLayoutY(55);
+        board.setLayoutY(-70);
 
         battlefieldPane.getChildren().add(board);
 
