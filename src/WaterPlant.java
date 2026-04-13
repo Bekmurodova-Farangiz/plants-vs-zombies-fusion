@@ -31,7 +31,7 @@ public class WaterPlant extends Plant {
     }
     private void startAnimation() {
         animationTimeline = new Timeline(
-            new KeyFrame(Duration.seconds(0.4), e -> {
+            new KeyFrame(Duration.seconds(0.3), e -> {
                 currentFrame++;
 
                 if (currentFrame > 4) {
@@ -68,6 +68,10 @@ public class WaterPlant extends Plant {
 
             waterTimeline.setCycleCount(Timeline.INDEFINITE);
             waterTimeline.play();
+        }
+
+        if (animationTimeline == null || animationTimeline.getStatus() != Timeline.Status.RUNNING) {
+            startAnimation();
         }
     }
 }

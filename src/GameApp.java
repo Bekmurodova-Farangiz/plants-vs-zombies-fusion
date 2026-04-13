@@ -34,11 +34,29 @@ public class GameApp extends Application {
         final GameBoard[] boardRef = {null};
 
         // Top HUD labels
-        Label sunLabel = new Label("Sun: 200");
+        ImageView sunStorageIcon = new ImageView(new Image("file:src/assets/sun.png"));
+        sunStorageIcon.setFitWidth(120);
+        sunStorageIcon.setFitHeight(120);
+        sunStorageIcon.setPreserveRatio(true);
+
+        Label sunLabel = new Label("200");
         sunLabel.setStyle("-fx-font-size: 20px; -fx-text-fill: yellow;");
 
-        Label waterLabel = new Label("Water: 100");
+        HBox sunBox = new HBox(sunStorageIcon, sunLabel);
+        sunBox.setSpacing(6);
+        sunBox.setAlignment(Pos.CENTER_LEFT);
+
+        ImageView waterStorageIcon = new ImageView(new Image("file:src/assets/water.png"));
+        waterStorageIcon.setFitWidth(120);
+        waterStorageIcon.setFitHeight(130);
+        waterStorageIcon.setPreserveRatio(true);
+
+        Label waterLabel = new Label("100");
         waterLabel.setStyle("-fx-font-size: 20px; -fx-text-fill: lightblue;");
+
+        HBox waterBox = new HBox(waterStorageIcon, waterLabel);
+        waterBox.setSpacing(6);
+        waterBox.setAlignment(Pos.CENTER_LEFT);
 
         Label selectedPlantLabel = new Label("Selected: PeaShooter");
         selectedPlantLabel.setStyle("-fx-font-size: 16px; -fx-text-fill: black;");
@@ -70,15 +88,35 @@ public class GameApp extends Application {
         restartButton.setStyle("-fx-font-size: 16px;");
         restartButton.setVisible(false);
 
-        Button pauseButton = new Button("Pause");
-        pauseButton.setStyle("-fx-font-size: 16px;");
+        ImageView pauseIcon = new ImageView(new Image("file:src/assets/pause_icon.png"));
+        pauseIcon.setFitWidth(100);
+        pauseIcon.setFitHeight(100);
 
-        Button resumeButton = new Button("Resume");
-        resumeButton.setStyle("-fx-font-size: 16px;");
+        Button pauseButton = new Button();
+        pauseButton.setGraphic(pauseIcon);
+        pauseButton.setStyle("-fx-background-color: transparent; -fx-padding: 0;");
+
+        ImageView resumeIcon = new ImageView(new Image("file:src/assets/resume_icon.png"));
+        resumeIcon.setFitWidth(100);
+        resumeIcon.setFitHeight(100);
+
+        Button resumeButton = new Button();
+        resumeButton.setGraphic(resumeIcon);
+        resumeButton.setStyle("-fx-background-color: transparent; -fx-padding: 0;");
         resumeButton.setVisible(false);
 
-        Button mainMenuButton = new Button("Main Menu");
-        mainMenuButton.setStyle("-fx-font-size: 16px;");
+        ImageView menuIcon = new ImageView(new Image("file:src/assets/menu_icon.png"));
+        menuIcon.setFitWidth(100);
+        menuIcon.setFitHeight(100);
+
+        Button mainMenuButton = new Button();
+        mainMenuButton.setGraphic(menuIcon);
+        mainMenuButton.setStyle("-fx-background-color: transparent; -fx-padding: 0;");
+
+        pauseButton.setFocusTraversable(false);
+        resumeButton.setFocusTraversable(false);
+        mainMenuButton.setFocusTraversable(false);
+        restartButton.setFocusTraversable(false);
 
         PlantCard peaShooterCard = new PlantCard("PeaShooter", "file:src/assets/peashooter.png", 50, 20);
         PlantCard wallPlantCard = new PlantCard("WallPlant", "file:src/assets/wallplant.png", 50, 40);
@@ -95,9 +133,13 @@ public class GameApp extends Application {
         Pane spacer = new Pane();
         HBox.setHgrow(spacer, javafx.scene.layout.Priority.ALWAYS);
 
+        StackPane pauseResumeSlot = new StackPane(pauseButton, resumeButton);
+        pauseResumeSlot.setPrefWidth(50);
+        pauseResumeSlot.setPrefHeight(50);
+
         HBox topBar = new HBox(
-                sunLabel,
-                waterLabel,
+                sunBox,
+                waterBox,
                 selectedPlantLabel,
                 waveBox,
                 peaShooterCard,
@@ -105,8 +147,7 @@ public class GameApp extends Application {
                 sunflowerCard,
                 waterPlantCard,
                 spacer,
-                pauseButton,
-                resumeButton,
+                pauseResumeSlot,
                 mainMenuButton
         );
         topBar.setAlignment(Pos.CENTER_LEFT);
@@ -233,8 +274,8 @@ public class GameApp extends Application {
                     flag1.setStyle("-fx-font-size: 18px; -fx-text-fill: " + (currentWave >= 1 ? "red;" : "gray;"));
                     flag2.setStyle("-fx-font-size: 18px; -fx-text-fill: " + (currentWave >= 2 ? "red;" : "gray;"));
                     flag3.setStyle("-fx-font-size: 18px; -fx-text-fill: " + (currentWave >= 3 ? "red;" : "gray;"));
-                    sunLabel.setText("Sun: " + boardRef[0].getSunPoints());
-                    waterLabel.setText("Water: " + boardRef[0].getWaterPoints());
+                    sunLabel.setText("" + boardRef[0].getSunPoints());
+                    waterLabel.setText("" + boardRef[0].getWaterPoints());
                     selectedPlantLabel.setText("Selected: " + boardRef[0].getSelectedPlantType());
                     peaShooterCard.setOnCooldown(boardRef[0].getRemainingCooldownMillis("PeaShooter") > 0);
                     wallPlantCard.setOnCooldown(boardRef[0].getRemainingCooldownMillis("WallPlant") > 0);
@@ -298,6 +339,8 @@ public class GameApp extends Application {
 
         stage.setTitle("Plantz Vs Zombiie Fusion");
         stage.setScene(scene);
+        stage.setFullScreen(true);//opens the game in fullscreen
+        stage.setFullScreenExitHint(""); //removes the default JavaFX messag
         stage.show();
     }
 
