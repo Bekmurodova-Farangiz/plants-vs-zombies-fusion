@@ -92,6 +92,9 @@ public class GameApp extends Application {
         VBox waveBox = new VBox(waveLabel, waveProgressBar, flagBar);
         waveBox.setSpacing(4);
 
+        Pane spacer = new Pane();
+        HBox.setHgrow(spacer, javafx.scene.layout.Priority.ALWAYS);
+
         HBox topBar = new HBox(
                 sunLabel,
                 waterLabel,
@@ -100,7 +103,11 @@ public class GameApp extends Application {
                 peaShooterCard,
                 wallPlantCard,
                 sunflowerCard,
-                waterPlantCard
+                waterPlantCard,
+                spacer,
+                pauseButton,
+                resumeButton,
+                mainMenuButton
         );
         topBar.setAlignment(Pos.CENTER_LEFT);
         topBar.setSpacing(20);
@@ -314,11 +321,11 @@ public class GameApp extends Application {
         battlefieldPane.setPrefSize(1600, 700);
 
         board.setLayoutX(40);
-        board.setLayoutY(-70);
+        board.setLayoutY(-15);
 
         battlefieldPane.getChildren().add(board);
 
-        HBox controlBar = new HBox(pauseButton, resumeButton, restartButton, mainMenuButton);
+        HBox controlBar = new HBox(restartButton);
         controlBar.setSpacing(10);
         controlBar.setAlignment(Pos.CENTER_LEFT);
 

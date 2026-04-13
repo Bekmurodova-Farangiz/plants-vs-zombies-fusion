@@ -15,19 +15,16 @@ public class PlantCard extends VBox {
         this.plantType = plantType;
 
         ImageView imageView = new ImageView(new Image(imagePath));
-        imageView.setFitWidth(50);
-        imageView.setFitHeight(50);
+        imageView.setFitWidth(60);
+        imageView.setFitHeight(60);
 
-        Label nameLabel = new Label(plantType);
-        costLabel = new Label("Sun: " + sunCost);
-        waterCostLabel = new Label("Water: " + waterCost);
         cooldownLabel = new Label("");
 
         setAlignment(Pos.CENTER);
-        setSpacing(4);
-        setStyle("-fx-border-color: black; -fx-padding: 6; -fx-background-color: rgba(255,255,255,0.75);");
+        setSpacing(2);
+        setStyle("-fx-border-color: black; -fx-padding: 3; -fx-background-color: rgba(255,255,255,0.6);");
 
-        getChildren().addAll(imageView, nameLabel, costLabel, waterCostLabel, cooldownLabel);
+        getChildren().addAll(imageView, cooldownLabel);
     }
 
     public String getPlantType() {

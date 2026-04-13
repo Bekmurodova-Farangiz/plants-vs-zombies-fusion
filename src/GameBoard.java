@@ -55,7 +55,8 @@ public class GameBoard extends GridPane {
                 final int currentCol = col;
                 Rectangle cellBackground = new Rectangle(CELL_WIDTH, CELL_HEIGHT);
                 cellBackground.setFill(Color.TRANSPARENT);
-                cellBackground.setStroke(null);
+                //cellBackground.setStroke(Color.RED);
+                cellBackground.setStrokeWidth(1);
 
                 StackPane cell = new StackPane();
                 cell.getChildren().add(cellBackground);
@@ -72,6 +73,29 @@ public class GameBoard extends GridPane {
                             System.out.println(selectedPlantType + " is on cooldown!");
                             return;
                         }
+
+                        int requiredSun;
+                        int requiredWater;
+
+                        if (selectedPlantType.equals("PeaShooter")) {
+                            requiredSun = 50;
+                            requiredWater = 20;
+                        } else if (selectedPlantType.equals("WallPlant")) {
+                            requiredSun = 50;
+                            requiredWater = 40;
+                        } else if (selectedPlantType.equals("Sunflower")) {
+                            requiredSun = 50;
+                            requiredWater = 10;
+                        } else {
+                            requiredSun = 50;
+                            requiredWater = 0;
+                        }
+
+                        if (sunPoints < requiredSun || waterPoints < requiredWater) {
+                            System.out.println("Not enough resources!");
+                            return;
+                        }
+
                         Plant plant;
 
                         if (selectedPlantType.equals("PeaShooter")) {
@@ -82,11 +106,6 @@ public class GameBoard extends GridPane {
                             plant = new Sunflower(currentRow, currentCol, this);
                         } else {
                             plant = new WaterPlant(currentRow, currentCol, this);
-                        }
-
-                        if (sunPoints < plant.getCost() || waterPoints < plant.getWaterCost()) {
-                            System.out.println("Not enough resources!");
-                            return;
                         }
 
                         sunPoints -= plant.getCost();
