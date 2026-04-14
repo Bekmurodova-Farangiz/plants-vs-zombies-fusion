@@ -13,7 +13,7 @@ public class WaterDrop {
     public WaterDrop(double x, double y) {
         view = new ImageView(new Image("file:src/assets/water.png"));
         view.setFitWidth(80);
-        view.setFitHeight(150);
+        view.setFitHeight(120);
 
         view.setTranslateX(x);
         view.setTranslateY(y);
