@@ -12,6 +12,7 @@ import java.util.List;
 import java.util.Random;
 import java.util.HashMap;
 import java.util.Map;
+import javafx.animation.PauseTransition;
 
 public class GameBoard extends GridPane {
 
@@ -31,14 +32,15 @@ public class GameBoard extends GridPane {
     private Timeline sunGenerator;
     private String selectedPlantType = "PeaShooter";
     private Map<String, Long> plantCooldowns = new HashMap<>();
-    private int currentWave = 1;
-    private int totalWaves = 3;
-    private int zombiesSpawnedInWave = 0;
-    private int zombiesPerWave = 5;
-    private boolean waveInProgress = true;
     private Timeline globalLoop;
     private boolean paused = false;
     private boolean gameWon = false;
+    private int currentWave = 1;
+    private int totalWaves = 3;
+    private int zombiesSpawnedInWave = 0;
+    private int zombiesPerWave = 8;
+    private boolean waveInProgress = true;
+    private double spawnIntervalSeconds = 3.5;
     
     //Constructor
     public GameBoard() {
@@ -150,17 +152,36 @@ public class GameBoard extends GridPane {
         int row = random.nextInt(ROWS);
 
         Zombie zombie;
-
         double rand = Math.random();
 
-        if (rand < 0.3) {
-            zombie = new Zombie(row);
-        } else if (rand < 0.55) {
-            zombie = new FastZombie(row);
-        } else if (rand < 0.8) {
-            zombie = new FatZombie(row);
+        if (currentWave == 1) {
+            if (rand < 0.7) {
+                zombie = new Zombie(row);
+            } else if (rand < 0.95) {
+                zombie = new FastZombie(row);
+            } else {
+                zombie = new FatZombie(row);
+            }
+        } else if (currentWave == 2) {
+            if (rand < 0.45) {
+                zombie = new Zombie(row);
+            } else if (rand < 0.75) {
+                zombie = new FastZombie(row);
+            } else if (rand < 0.95) {
+                zombie = new FatZombie(row);
+            } else {
+                zombie = new TankZombie(row);
+            }
         } else {
-            zombie = new TankZombie(row);
+            if (rand < 0.25) {
+                zombie = new Zombie(row);
+            } else if (rand < 0.5) {
+                zombie = new FastZombie(row);
+            } else if (rand < 0.75) {
+                zombie = new FatZombie(row);
+            } else {
+                zombie = new TankZombie(row);
+            }
         }
 
         zombies.add(zombie);
@@ -289,7 +310,7 @@ public class GameBoard extends GridPane {
     }
     public void startZombieSpawner() {
         zombieSpawner = new Timeline(
-            new KeyFrame(Duration.seconds(5), e -> {
+            new KeyFrame(Duration.seconds(spawnIntervalSeconds), e -> {
                 if (paused || gameOver) {
                     return;
                 }
@@ -437,11 +458,24 @@ public class GameBoard extends GridPane {
 
         currentWave++;
         zombiesSpawnedInWave = 0;
-        zombiesPerWave += 3; // each wave gets bigger
         waveInProgress = true;
 
-        System.out.println("Starting wave " + currentWave);
-        startZombieSpawner();
+        if (currentWave == 2) {
+            zombiesPerWave = 12;
+            spawnIntervalSeconds = 2.5;
+        } else if (currentWave == 3) {
+            zombiesPerWave = 16;
+            spawnIntervalSeconds = 1.8;
+        }
+
+        System.out.println("Wave " + currentWave + " will start soon...");
+
+        PauseTransition breakBetweenWaves = new PauseTransition(Duration.seconds(5));
+        breakBetweenWaves.setOnFinished(e -> {
+            System.out.println("Starting wave " + currentWave);
+            startZombieSpawner();
+        });
+        breakBetweenWaves.play();
     }
     public int getCurrentWave() {
         return currentWave;
@@ -571,10 +605,10 @@ public class GameBoard extends GridPane {
             zombie.resumeActions();
         }
     }
-
     public boolean isGameWon(){
         return gameWon;
     }
+
     public void setGameWon(boolean gameWon){
         this.gameWon = gameWon;
     }
