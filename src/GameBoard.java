@@ -13,7 +13,7 @@ import java.util.Random;
 import java.util.HashMap;
 import java.util.Map;
 import javafx.animation.PauseTransition;
-
+import java.util.ArrayList;
 public class GameBoard extends GridPane {
 
     private static final int ROWS = 5;
@@ -36,19 +36,56 @@ public class GameBoard extends GridPane {
     private boolean paused = false;
     private boolean gameWon = false;
     private int currentWave = 1;
-    private int totalWaves = 3;
+    private int totalWaves;
     private int zombiesSpawnedInWave = 0;
     private int zombiesPerWave = 8;
     private boolean waveInProgress = true;
     private double spawnIntervalSeconds = 3.5;
+    private List<Wave> waves = new ArrayList<>();
     
     //Constructor
     public GameBoard() {
         this.setStyle("-fx-background-color: transparent;");
+        initializeWaves();
+        totalWaves = waves.size();
+        zombiesPerWave = waves.get(0).getTotalZombies();
+        spawnIntervalSeconds = waves.get(0).getSpawnInterval();
         createBoard();
         spawnZombie();
         startZombieSpawner();
         startGlobalLoop();
+    }
+    private void initializeWaves() {
+
+        // Wave 1 (easy)
+        waves.add(new Wave(
+            8,      // zombies
+            3.5,    // spawn interval
+            0.7,    // normal
+            0.25,   // fast
+            0.05,   // fat
+            0.0     // tank
+        ));
+
+        // Wave 2 (medium)
+        waves.add(new Wave(
+            12,
+            2.5,
+            0.45,
+            0.30,
+            0.20,
+            0.05
+        ));
+
+        // Wave 3 (hard)
+        waves.add(new Wave(
+            16,
+            1.8,
+            0.25,
+            0.25,
+            0.25,
+            0.25
+        ));
     }
 
     private void createBoard() {
@@ -151,37 +188,23 @@ public class GameBoard extends GridPane {
         Random random = new Random();
         int row = random.nextInt(ROWS);
 
+        Wave wave = waves.get(currentWave - 1);
+
         Zombie zombie;
         double rand = Math.random();
 
-        if (currentWave == 1) {
-            if (rand < 0.7) {
-                zombie = new Zombie(row);
-            } else if (rand < 0.95) {
-                zombie = new FastZombie(row);
-            } else {
-                zombie = new FatZombie(row);
-            }
-        } else if (currentWave == 2) {
-            if (rand < 0.45) {
-                zombie = new Zombie(row);
-            } else if (rand < 0.75) {
-                zombie = new FastZombie(row);
-            } else if (rand < 0.95) {
-                zombie = new FatZombie(row);
-            } else {
-                zombie = new TankZombie(row);
-            }
+        double normalLimit = wave.getNormalChance();
+        double fastLimit = normalLimit + wave.getFastChance();
+        double fatLimit = fastLimit + wave.getFatChance();
+
+        if (rand < normalLimit) {
+            zombie = new Zombie(row);
+        } else if (rand < fastLimit) {
+            zombie = new FastZombie(row);
+        } else if (rand < fatLimit) {
+            zombie = new FatZombie(row);
         } else {
-            if (rand < 0.25) {
-                zombie = new Zombie(row);
-            } else if (rand < 0.5) {
-                zombie = new FastZombie(row);
-            } else if (rand < 0.75) {
-                zombie = new FatZombie(row);
-            } else {
-                zombie = new TankZombie(row);
-            }
+            zombie = new TankZombie(row);
         }
 
         zombies.add(zombie);
@@ -460,13 +483,9 @@ public class GameBoard extends GridPane {
         zombiesSpawnedInWave = 0;
         waveInProgress = true;
 
-        if (currentWave == 2) {
-            zombiesPerWave = 12;
-            spawnIntervalSeconds = 2.5;
-        } else if (currentWave == 3) {
-            zombiesPerWave = 16;
-            spawnIntervalSeconds = 1.8;
-        }
+        Wave wave = waves.get(currentWave - 1);
+        zombiesPerWave = wave.getTotalZombies();
+        spawnIntervalSeconds = wave.getSpawnInterval();
 
         System.out.println("Wave " + currentWave + " will start soon...");
 
