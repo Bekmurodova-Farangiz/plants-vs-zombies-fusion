@@ -1,5 +1,3 @@
-import javafx.scene.paint.Color;
-import javafx.scene.shape.Rectangle;
 import javafx.animation.Timeline;
 import javafx.scene.image.Image;
 import javafx.scene.image.ImageView;
@@ -13,6 +11,7 @@ public class Zombie {
     private Timeline movementTimeline;
     private int row;
     private double speed;
+    private int attackDamage;
 
     //constructor
     public Zombie(int row) {
@@ -23,6 +22,7 @@ public class Zombie {
         moving = true;
         this.row = row;
         speed = 1.0;
+        attackDamage = 1;
     }
 
     public ImageView getView() {
@@ -67,6 +67,9 @@ public class Zombie {
     public void setSpeed(double speed) {
         this.speed = speed;
     }
+    public void setHealth(int health) {
+        this.health = health;
+    }
     public void setZombieImage(String imagePath) {
         view.setImage(new Image(imagePath));
     }
@@ -81,4 +84,12 @@ public class Zombie {
             movementTimeline.play();
         }
     }
+    public int getAttackDamage() {
+        return attackDamage;
+    }
+
+    public void setAttackDamage(int attackDamage) {
+        this.attackDamage = attackDamage;
+    }
+    
 }

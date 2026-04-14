@@ -22,7 +22,7 @@ public class PlantCard extends VBox {
 
         setAlignment(Pos.CENTER);
         setSpacing(2);
-        setStyle("-fx-border-color: black; -fx-padding: 3; -fx-background-color: rgba(255,255,255,0.6);");
+        setStyle("-fx-border-color: transparent; -fx-padding: 3; -fx-background-color: transparent;");
 
         getChildren().addAll(imageView, cooldownLabel);
     }
@@ -33,9 +33,9 @@ public class PlantCard extends VBox {
 
     public void setSelected(boolean selected) {
         if (selected) {
-            setStyle("-fx-border-color: green; -fx-border-width: 3; -fx-padding: 6; -fx-background-color: rgba(255,255,255,0.9);");
+            setStyle("-fx-border-color: lime; -fx-border-width: 3; -fx-padding: 3; -fx-background-color: transparent;");
         } else {
-            setStyle("-fx-border-color: black; -fx-padding: 6; -fx-background-color: rgba(255,255,255,0.75);");
+            setStyle("-fx-border-color: transparent; -fx-padding: 3; -fx-background-color: transparent;");
         }
     }
 

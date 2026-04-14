@@ -151,10 +151,16 @@ public class GameBoard extends GridPane {
 
         Zombie zombie;
 
-        if (Math.random() < 0.5) {
+        double rand = Math.random();
+
+        if (rand < 0.3) {
             zombie = new Zombie(row);
-        } else {
+        } else if (rand < 0.55) {
             zombie = new FastZombie(row);
+        } else if (rand < 0.8) {
+            zombie = new FatZombie(row);
+        } else {
+            zombie = new TankZombie(row);
         }
 
         zombies.add(zombie);
@@ -200,7 +206,7 @@ public class GameBoard extends GridPane {
         if (zombie.getView().localToScene(zombie.getView().getBoundsInLocal())
                 .intersects(plant.getView().localToScene(plant.getView().getBoundsInLocal()))) {
 
-            plant.takeDamage(1);
+            plant.takeDamage(zombie.getAttackDamage());
             System.out.println("Zombie is attacking a plant!");
 
             if (plant.isDead()) {

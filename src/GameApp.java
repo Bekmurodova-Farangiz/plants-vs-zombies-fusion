@@ -153,14 +153,30 @@ public class GameApp extends Application {
         StackPane pauseResumeSlot = new StackPane(pauseButton, resumeButton);
         pauseResumeSlot.setPrefWidth(50);
         pauseResumeSlot.setPrefHeight(50);
+        
+        HBox plantPanel = new HBox(
+        peaShooterCard,
+        wallPlantCard,
+        sunflowerCard,
+        waterPlantCard
+        );
+
+        plantPanel.setSpacing(10);
+        plantPanel.setAlignment(Pos.CENTER_LEFT);
+
+        plantPanel.setStyle(
+            "-fx-background-color: rgba(20,20,20,0.45);" +
+            "-fx-padding: 12;" +
+            "-fx-background-radius: 20;" +
+            "-fx-border-radius: 20;" +
+            "-fx-border-color: rgba(255,255,255,0.18);" +
+            "-fx-border-width: 1.5;"
+        );
 
         HBox topBar = new HBox(
                 sunBox,
                 waterBox,
-                peaShooterCard,
-                wallPlantCard,
-                sunflowerCard,
-                waterPlantCard,
+                plantPanel,
                 spacer,
                 pauseResumeSlot,
                 mainMenuButton
