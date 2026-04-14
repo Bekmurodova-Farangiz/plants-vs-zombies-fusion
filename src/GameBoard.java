@@ -56,7 +56,7 @@ public class GameBoard extends GridPane {
                 final int currentCol = col;
                 Rectangle cellBackground = new Rectangle(CELL_WIDTH, CELL_HEIGHT);
                 cellBackground.setFill(Color.TRANSPARENT);
-                cellBackground.setStroke(Color.RED);
+                //cellBackground.setStroke(Color.RED);
                 cellBackground.setStrokeWidth(1);
 
                 StackPane cell = new StackPane();
