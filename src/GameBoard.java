@@ -16,9 +16,9 @@ import java.util.Map;
 public class GameBoard extends GridPane {
 
     private static final int ROWS = 5;
-    private static final int COLUMNS = 9;
-    private static final int CELL_WIDTH = 173;
-    private static final int CELL_HEIGHT = 157;
+    private static final int COLUMNS = 10;
+    private static final int CELL_WIDTH = 150;
+    private static final int CELL_HEIGHT = 132;
     private List<Plant> plants = new ArrayList<>();    //plants stores all plant objects on the board
     private List<Zombie> zombies = new ArrayList<>(); //zombies stores all zombie objects on the board
     private List<Bullet> bullets = new ArrayList<>();  //bullets added to the storage
@@ -38,6 +38,7 @@ public class GameBoard extends GridPane {
     private boolean waveInProgress = true;
     private Timeline globalLoop;
     private boolean paused = false;
+    private boolean gameWon = false;
     
     //Constructor
     public GameBoard() {
@@ -414,7 +415,17 @@ public class GameBoard extends GridPane {
     }
     public void startNextWave() {
         if (currentWave >= totalWaves) {
-            System.out.println("All waves completed!");
+            gameWon = true;
+
+            if (zombieSpawner != null) {
+                zombieSpawner.stop();
+            }
+
+            if (globalLoop != null) {
+                globalLoop.stop();
+            }
+
+            System.out.println("All waves completed! YOU WON!");
             return;
         }
 
@@ -553,6 +564,13 @@ public class GameBoard extends GridPane {
         for (Zombie zombie : zombies) {
             zombie.resumeActions();
         }
+    }
+
+    public boolean isGameWon(){
+        return gameWon;
+    }
+    public void setGameWon(boolean gameWon){
+        this.gameWon = gameWon;
     }
 
 }

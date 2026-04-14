@@ -29,6 +29,6 @@ public class Bullet {
         view.setTranslateX(view.getTranslateX() + 5);
     }
       public boolean isOffScreen() {
-        return view.getTranslateX() > 1530;
+        return view.getTranslateX() > 1510;
     }
 }

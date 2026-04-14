@@ -17,8 +17,8 @@ public class Zombie {
     //constructor
     public Zombie(int row) {
         view = new ImageView(new Image("file:src/assets/zombie.png"));
-        view.setFitWidth(150);
-        view.setFitHeight(150);
+        view.setFitWidth(130);
+        view.setFitHeight(130);
         health = 100;
         moving = true;
         this.row = row;

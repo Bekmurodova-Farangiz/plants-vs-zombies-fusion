@@ -58,12 +58,6 @@ public class GameApp extends Application {
         waterBox.setSpacing(6);
         waterBox.setAlignment(Pos.CENTER_LEFT);
 
-        Label selectedPlantLabel = new Label("Selected: PeaShooter");
-        selectedPlantLabel.setStyle("-fx-font-size: 16px; -fx-text-fill: black;");
-        
-        Label waveLabel = new Label("Wave: 1/3");
-        waveLabel.setStyle("-fx-font-size: 16px; -fx-text-fill: pink;");
-
         ProgressBar waveProgressBar = new ProgressBar(0);
         waveProgressBar.setPrefWidth(180);
 
@@ -82,6 +76,27 @@ public class GameApp extends Application {
         // Game-over text
         Label gameOverLabel = new Label("");
         gameOverLabel.setStyle("-fx-font-size: 30px; -fx-text-fill: red;");
+
+        Label winLabel = new Label("YOU WON THE GAME!");
+        winLabel.setStyle("-fx-font-size: 42px; -fx-text-fill: gold; -fx-font-weight: bold;");
+        winLabel.setVisible(false);
+
+        Button winRestartButton = new Button("Restart");
+        winRestartButton.setStyle("-fx-font-size: 18px;");
+        winRestartButton.setVisible(false);
+
+        Button winMenuButton = new Button();
+        ImageView winMenuIcon = new ImageView(new Image("file:src/assets/menu_icon.png"));
+        winMenuIcon.setFitWidth(55);
+        winMenuIcon.setFitHeight(55);
+        winMenuButton.setGraphic(winMenuIcon);
+        winMenuButton.setStyle("-fx-background-color: transparent; -fx-padding: 0;");
+        winMenuButton.setVisible(false);
+
+        VBox winOverlay = new VBox(winLabel, winRestartButton, winMenuButton);
+        winOverlay.setSpacing(18);
+        winOverlay.setAlignment(Pos.CENTER);
+        winOverlay.setVisible(false);
 
         // Restart button
         Button restartButton = new Button("Restart");
@@ -127,8 +142,10 @@ public class GameApp extends Application {
         peaShooterCard.setSelected(true);
 
         // Top bar shown during gameplay
-        VBox waveBox = new VBox(waveLabel, waveProgressBar, flagBar);
+        VBox waveBox = new VBox(waveProgressBar, flagBar);
         waveBox.setSpacing(4);
+        waveBox.setStyle("-fx-background-color: rgba(0,0,0,0.35); -fx-padding: 10; -fx-background-radius: 12;");
+        waveBox.setPrefWidth(220);
 
         Pane spacer = new Pane();
         HBox.setHgrow(spacer, javafx.scene.layout.Priority.ALWAYS);
@@ -140,8 +157,6 @@ public class GameApp extends Application {
         HBox topBar = new HBox(
                 sunBox,
                 waterBox,
-                selectedPlantLabel,
-                waveBox,
                 peaShooterCard,
                 wallPlantCard,
                 sunflowerCard,
@@ -222,11 +237,13 @@ public class GameApp extends Application {
                 VBox newGameLayout = buildGameLayout(
                         newBoard,
                         topBar,
+                        waveBox,
                         gameOverLabel,
                         restartButton,
                         pauseButton,
                         resumeButton,
                         mainMenuButton,
+                        winOverlay,
                         DESIGN_WIDTH,
                         DESIGN_HEIGHT
                 );
@@ -237,11 +254,13 @@ public class GameApp extends Application {
             VBox gameLayout = buildGameLayout(
                     board,
                     topBar,
+                    waveBox,
                     gameOverLabel,
                     restartButton,
                     pauseButton,
                     resumeButton,
                     mainMenuButton,
+                    winOverlay,
                     DESIGN_WIDTH,
                     DESIGN_HEIGHT
             );
@@ -276,17 +295,31 @@ public class GameApp extends Application {
                     flag3.setStyle("-fx-font-size: 18px; -fx-text-fill: " + (currentWave >= 3 ? "red;" : "gray;"));
                     sunLabel.setText("" + boardRef[0].getSunPoints());
                     waterLabel.setText("" + boardRef[0].getWaterPoints());
-                    selectedPlantLabel.setText("Selected: " + boardRef[0].getSelectedPlantType());
                     peaShooterCard.setOnCooldown(boardRef[0].getRemainingCooldownMillis("PeaShooter") > 0);
                     wallPlantCard.setOnCooldown(boardRef[0].getRemainingCooldownMillis("WallPlant") > 0);
                     sunflowerCard.setOnCooldown(boardRef[0].getRemainingCooldownMillis("Sunflower") > 0);
                     waterPlantCard.setOnCooldown(boardRef[0].getRemainingCooldownMillis("WaterPlant") > 0);
-                    waveLabel.setText("Wave: " + boardRef[0].getCurrentWave() + "/" + boardRef[0].getTotalWaves());
                     waveProgressBar.setProgress(boardRef[0].getWaveProgress());
 
                     if (boardRef[0].isGameOver()) {
                         gameOverLabel.setText("GAME OVER");
                         restartButton.setVisible(true);
+                    }
+
+                    if (boardRef[0].isGameWon()) {
+                        winOverlay.setVisible(true);
+                        winLabel.setVisible(true);
+                        winRestartButton.setVisible(true);
+                        winMenuButton.setVisible(true);
+
+                        restartButton.setVisible(false);
+                        pauseButton.setVisible(false);
+                        resumeButton.setVisible(false);
+                    } else {
+                        winOverlay.setVisible(false);
+                        winLabel.setVisible(false);
+                        winRestartButton.setVisible(false);
+                        winMenuButton.setVisible(false);
                     }
                 }
                 pauseButton.setOnAction(e -> {
@@ -314,6 +347,25 @@ public class GameApp extends Application {
                     resumeButton.setVisible(false);
                     restartButton.setVisible(false);
                     gameOverLabel.setText("");
+
+                    contentLayer.getChildren().setAll(menu);
+                });
+                winRestartButton.setOnAction(e -> {
+                    if (restartButton.getOnAction() != null) {
+                        restartButton.fire();
+                    }
+                });
+                winMenuButton.setOnAction(e -> {
+                    if (boardRef[0] != null) {
+                        boardRef[0].setPaused(false);
+                        boardRef[0] = null;
+                    }
+
+                    pauseButton.setVisible(true);
+                    resumeButton.setVisible(false);
+                    restartButton.setVisible(false);
+                    gameOverLabel.setText("");
+                    winOverlay.setVisible(false);
 
                     contentLayer.getChildren().setAll(menu);
                 });
@@ -351,11 +403,13 @@ public class GameApp extends Application {
     private VBox buildGameLayout(
             GameBoard board,
             HBox topBar,
+            VBox waveBox,
             Label gameOverLabel,
             Button restartButton,
             Button pauseButton,
             Button resumeButton,
             Button mainMenuButton,
+            VBox winOverlay,
             double designWidth,
             double designHeight
     ) {
@@ -363,10 +417,16 @@ public class GameApp extends Application {
         Pane battlefieldPane = new Pane();
         battlefieldPane.setPrefSize(1600, 700);
 
-        board.setLayoutX(40);
-        board.setLayoutY(-15);
+        board.setLayoutX(57);
+        board.setLayoutY(7);
 
-        battlefieldPane.getChildren().add(board);
+        battlefieldPane.getChildren().addAll(board, waveBox, winOverlay);
+
+        waveBox.setLayoutX(1200);
+        waveBox.setLayoutY(670);
+
+        winOverlay.setLayoutX(600);
+        winOverlay.setLayoutY(220);
 
         HBox controlBar = new HBox(restartButton);
         controlBar.setSpacing(10);
