@@ -15,10 +15,10 @@ import javafx.animation.PauseTransition;
 import java.util.function.Consumer;
 public class GameBoard extends Pane {
 
-    private static final int ROWS = 5;
-    private static final int COLUMNS = 10;
-    private static final int CELL_WIDTH = 150;
-    private static final int CELL_HEIGHT = 132;
+    private static final int ROWS = BoardMetrics.ROWS;
+    private static final int COLUMNS = BoardMetrics.COLUMNS;
+    private static final int CELL_WIDTH = BoardMetrics.CELL_WIDTH;
+    private static final int CELL_HEIGHT = BoardMetrics.CELL_HEIGHT;
     private List<Plant> plants = new ArrayList<>();    //plants stores all plant objects on the board
     private List<Zombie> zombies = new ArrayList<>(); //zombies stores all zombie objects on the board
     private List<Bullet> bullets = new ArrayList<>();  //bullets added to the storage
@@ -194,8 +194,8 @@ public class GameBoard extends Pane {
         return false;
     }
     public void shootFromPlant(Plant plant) {
-        double bulletX = (plant.getCol() * CELL_WIDTH) + 110;
-        double bulletY = (plant.getRow() * CELL_HEIGHT) - 25;
+        double bulletX = plant.getShootOriginX() - (Bullet.WIDTH / 2.0);
+        double bulletY = plant.getShootOriginY() - (Bullet.HEIGHT / 2.0);
 
         Bullet bullet = new Bullet(bulletX, bulletY);
         bullet.getView().setMouseTransparent(true);
@@ -348,8 +348,8 @@ public class GameBoard extends Pane {
         System.out.println("Sun points: " + sunPoints);
     }
     public void spawnSunFromPlant(Plant plant) {
-        double x = (plant.getCol() * CELL_WIDTH) + (CELL_WIDTH / 2.0);
-        double y = (plant.getRow() * CELL_HEIGHT) + (CELL_HEIGHT / 2.0);
+        double x = plant.getCenterX();
+        double y = plant.getCenterY();
 
         // target near the sun counter area
         double targetX = 20;
@@ -368,8 +368,8 @@ public class GameBoard extends Pane {
         System.out.println("Water points: " + waterPoints);
     }
     public void spawnWaterDropFromPlant(Plant plant) {
-        double x = (plant.getCol() * CELL_WIDTH) + (CELL_WIDTH / 2.0);
-        double y = (plant.getRow() * CELL_HEIGHT) + (CELL_HEIGHT / 2.0);
+        double x = plant.getCenterX();
+        double y = plant.getCenterY();
 
         WaterDrop drop = new WaterDrop(x, y);
 

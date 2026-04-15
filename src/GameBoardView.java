@@ -1,3 +1,4 @@
+import javafx.geometry.Pos;
 import javafx.scene.layout.GridPane;
 import javafx.scene.layout.StackPane;
 import javafx.scene.paint.Color;
@@ -7,10 +8,10 @@ import java.util.function.BiConsumer;
 
 public class GameBoardView extends GridPane {
 
-    public static final int ROWS = 5;
-    public static final int COLUMNS = 10;
-    public static final int CELL_WIDTH = 150;
-    public static final int CELL_HEIGHT = 132;
+    public static final int ROWS = BoardMetrics.ROWS;
+    public static final int COLUMNS = BoardMetrics.COLUMNS;
+    public static final int CELL_WIDTH = BoardMetrics.CELL_WIDTH;
+    public static final int CELL_HEIGHT = BoardMetrics.CELL_HEIGHT;
 
     private StackPane[][] cells;
     private BiConsumer<Integer, Integer> cellClickHandler;
@@ -29,6 +30,11 @@ public class GameBoardView extends GridPane {
                 cellBackground.setStroke(null);
 
                 StackPane cell = new StackPane();
+                cell.setPrefSize(CELL_WIDTH, CELL_HEIGHT);
+                cell.setMinSize(CELL_WIDTH, CELL_HEIGHT);
+                cell.setMaxSize(CELL_WIDTH, CELL_HEIGHT);
+                cell.setAlignment(Pos.CENTER);
+                StackPane.setAlignment(cellBackground, Pos.CENTER);
                 cell.getChildren().add(cellBackground);
 
                 final int currentRow = row;
@@ -54,6 +60,8 @@ public class GameBoardView extends GridPane {
     }
     public void addPlantToCell(int row, int col, Plant plant) {
         plant.getView().setMouseTransparent(true);
+        plant.configureView();
+        StackPane.setAlignment(plant.getView(), Pos.CENTER);
         cells[row][col].getChildren().add(plant.getView());
     }
     public void removePlantFromCell(Plant plant) {

@@ -3,12 +3,15 @@ import javafx.scene.shape.Rectangle;
 
 public class Bullet {
 
+    public static final double WIDTH = 20;
+    public static final double HEIGHT = 20;
+
     private Rectangle view;
     private int damage;
     
 
     public Bullet(double x, double y) {
-        view = new Rectangle(20, 20);
+        view = new Rectangle(WIDTH, HEIGHT);
         view.setFill(Color.YELLOW);
 
         view.setTranslateX(x);

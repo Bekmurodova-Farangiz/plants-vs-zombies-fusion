@@ -6,6 +6,8 @@ import javafx.scene.image.ImageView;
 
 public class Plant {
 
+    private static final double DEFAULT_VIEW_SIZE = Math.min(BoardMetrics.CELL_WIDTH, BoardMetrics.CELL_HEIGHT) * 0.83;
+
     private ImageView view;
     private int health;
     private int row;
@@ -18,8 +20,10 @@ public class Plant {
     // constructor
     public Plant(int row, int col) {
         view = new ImageView(new Image("file:src/assets/peashooter.png"));
-        view.setFitWidth(110);
-        view.setFitHeight(110);
+        view.setPreserveRatio(true);
+        view.setSmooth(true);
+        view.setFitWidth(DEFAULT_VIEW_SIZE);
+        view.setFitHeight(DEFAULT_VIEW_SIZE);
 
         health = 100;
         this.row = row;
@@ -43,12 +47,51 @@ public class Plant {
     public ImageView getView() {
         return view;
     }
+    public final void configureView() {
+        view.setPreserveRatio(true);
+        view.setSmooth(true);
+        view.setFitWidth(getVisualFitWidth());
+        view.setFitHeight(getVisualFitHeight());
+        view.setTranslateX(getVisualOffsetX());
+        view.setTranslateY(getVisualOffsetY());
+    }
     public int getRow() {
         return row;
     }
 
     public int getCol() {
         return col;
+    }
+    public double getCenterX() {
+        return (col * BoardMetrics.CELL_WIDTH) + (BoardMetrics.CELL_WIDTH / 2.0);
+    }
+
+    public double getCenterY() {
+        return (row * BoardMetrics.CELL_HEIGHT) + (BoardMetrics.CELL_HEIGHT / 2.0);
+    }
+
+    public double getShootOriginX() {
+        double plantWidth = view.getFitWidth() > 0 ? view.getFitWidth() : view.getBoundsInLocal().getWidth();
+        return getCenterX() + (plantWidth / 2.0);
+    }
+
+    public double getShootOriginY() {
+        return getCenterY();
+    }
+    public double getVisualFitWidth() {
+        return DEFAULT_VIEW_SIZE;
+    }
+
+    public double getVisualFitHeight() {
+        return DEFAULT_VIEW_SIZE;
+    }
+
+    public double getVisualOffsetX() {
+        return 0;
+    }
+
+    public double getVisualOffsetY() {
+        return 0;
     }
     public void setShootingTimeline(Timeline shootingTimeline) {
         this.shootingTimeline = shootingTimeline;
@@ -79,7 +122,7 @@ public class Plant {
         this.cooldown = cooldown;
     }
     public void setPlantImage(String imagePath) {
-    view.setImage(new Image(imagePath));
+        view.setImage(new Image(imagePath));
     }
     public int getWaterCost() {
     return waterCost;
