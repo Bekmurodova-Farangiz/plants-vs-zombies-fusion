@@ -1,20 +1,19 @@
-import javafx.scene.layout.GridPane;
-import javafx.scene.layout.StackPane;
-import javafx.scene.paint.Color;
-import javafx.scene.shape.Rectangle;
+import javafx.scene.layout.Pane;
 //timelien imports
 import javafx.animation.KeyFrame;
 import javafx.animation.Timeline;
 import javafx.util.Duration;
 // list of plants to GameBoard.
 import java.util.ArrayList;
+import java.util.EnumMap;
+import java.util.Iterator;
 import java.util.List;
-import java.util.Random;
 import java.util.HashMap;
 import java.util.Map;
+import java.util.concurrent.ThreadLocalRandom;
 import javafx.animation.PauseTransition;
-import java.util.ArrayList;
-public class GameBoard extends GridPane {
+import java.util.function.Consumer;
+public class GameBoard extends Pane {
 
     private static final int ROWS = 5;
     private static final int COLUMNS = 10;
@@ -30,8 +29,8 @@ public class GameBoard extends GridPane {
     private int waterPoints = 100;
     private Timeline zombieSpawner;
     private Timeline sunGenerator;
-    private String selectedPlantType = "PeaShooter";
-    private Map<String, Long> plantCooldowns = new HashMap<>();
+    private PlantType selectedPlantType = PlantType.PEA_SHOOTER;
+    private Map<PlantType, Long> plantCooldowns = new HashMap<>();
     private Timeline globalLoop;
     private boolean paused = false;
     private boolean gameWon = false;
@@ -42,18 +41,26 @@ public class GameBoard extends GridPane {
     private boolean waveInProgress = true;
     private double spawnIntervalSeconds = 3.5;
     private List<Wave> waves = new ArrayList<>();
+    private BoardCell[][] cells = new BoardCell[ROWS][COLUMNS];
+    private Consumer<Plant> plantRemovedHandler;
     
     //Constructor
     public GameBoard() {
-        this.setStyle("-fx-background-color: transparent;");
+        setPrefSize(COLUMNS * CELL_WIDTH, ROWS * CELL_HEIGHT);
+        setPickOnBounds(false);
+        initializeCells();
         initializeWaves();
         totalWaves = waves.size();
-        zombiesPerWave = waves.get(0).getTotalZombies();
-        spawnIntervalSeconds = waves.get(0).getSpawnInterval();
-        createBoard();
-        spawnZombie();
+        configureWave(waves.get(0));
         startZombieSpawner();
         startGlobalLoop();
+    }
+    private void initializeCells() {
+        for (int row = 0; row < ROWS; row++) {
+            for (int col = 0; col < COLUMNS; col++) {
+                cells[row][col] = new BoardCell(row, col);
+            }
+        }
     }
     private void initializeWaves() {
 
@@ -61,151 +68,44 @@ public class GameBoard extends GridPane {
         waves.add(new Wave(
             8,      // zombies
             3.5,    // spawn interval
-            0.7,    // normal
-            0.25,   // fast
-            0.05,   // fat
-            0.0     // tank
+            createZombieProbabilities(0.7, 0.25, 0.05, 0.0)
         ));
 
         // Wave 2 (medium)
         waves.add(new Wave(
             12,
             2.5,
-            0.45,
-            0.30,
-            0.20,
-            0.05
+            createZombieProbabilities(0.45, 0.30, 0.20, 0.05)
         ));
 
         // Wave 3 (hard)
         waves.add(new Wave(
             16,
             1.8,
-            0.25,
-            0.25,
-            0.25,
-            0.25
+            createZombieProbabilities(0.25, 0.25, 0.25, 0.25)
         ));
     }
-
-    private void createBoard() {
-        for (int row = 0; row < ROWS; row++) {
-            for (int col = 0; col < COLUMNS; col++) {
-                final int currentRow = row;
-                final int currentCol = col;
-                Rectangle cellBackground = new Rectangle(CELL_WIDTH, CELL_HEIGHT);
-                cellBackground.setFill(Color.TRANSPARENT);
-                //cellBackground.setStroke(Color.RED);
-                cellBackground.setStrokeWidth(1);
-
-                StackPane cell = new StackPane();
-                cell.getChildren().add(cellBackground);
-                final boolean[] hasPlant = {false};
-                final Plant[] currentPlant = {null};
-
-                cell.setOnMouseClicked(e -> {
-                    if (paused || gameOver) {
-                        return;
-                    }
-
-                    if (!hasPlant[0]) {
-                        if (isOnCooldown(selectedPlantType)) {
-                            System.out.println(selectedPlantType + " is on cooldown!");
-                            return;
-                        }
-
-                        int requiredSun;
-                        int requiredWater;
-
-                        if (selectedPlantType.equals("PeaShooter")) {
-                            requiredSun = 50;
-                            requiredWater = 20;
-                        } else if (selectedPlantType.equals("WallPlant")) {
-                            requiredSun = 50;
-                            requiredWater = 40;
-                        } else if (selectedPlantType.equals("Sunflower")) {
-                            requiredSun = 50;
-                            requiredWater = 10;
-                        } else {
-                            requiredSun = 50;
-                            requiredWater = 0;
-                        }
-
-                        if (sunPoints < requiredSun || waterPoints < requiredWater) {
-                            System.out.println("Not enough resources!");
-                            return;
-                        }
-
-                        Plant plant;
-
-                        if (selectedPlantType.equals("PeaShooter")) {
-                            plant = new PeaShooter(currentRow, currentCol);
-                        } else if (selectedPlantType.equals("WallPlant")) {
-                            plant = new WallPlant(currentRow, currentCol);
-                        } else if (selectedPlantType.equals("Sunflower")) {
-                            plant = new Sunflower(currentRow, currentCol, this);
-                        } else {
-                            plant = new WaterPlant(currentRow, currentCol, this);
-                        }
-
-                        sunPoints -= plant.getCost();
-                        waterPoints -= plant.getWaterCost();
-                        plantCooldowns.put(selectedPlantType, System.currentTimeMillis() + (long)(plant.getCooldown() * 1000));
-                        System.out.println("Sun points left: " + sunPoints);
-
-                        currentPlant[0] = plant;
-                        plants.add(plant);
-
-                        cell.getChildren().add(plant.getView());
-                        hasPlant[0] = true;
-
-                        startShooting(plant);
-
-                        System.out.println("Plant placed at row " + currentRow + " col " + currentCol);
-                    }
-                    // IF PLANT EXISTS → DAMAGE IT
-                    else {
-                        Plant plant = currentPlant[0];
-
-                        plant.takeDamage(20);
-
-                        if (plant.isDead()) {
-                            cell.getChildren().remove(plant.getView());
-                            plants.remove(plant); //when it dies remove from list 
-                            hasPlant[0] = false;
-                            currentPlant[0] = null;
-
-                            System.out.println("Plant died and removed.");
-                        }
-                    }
-                });
-
-                add(cell, col, row);
-            }
-        }
+    private Map<ZombieType, Double> createZombieProbabilities(
+            double normalChance,
+            double fastChance,
+            double fatChance,
+            double tankChance
+    ) {
+        Map<ZombieType, Double> probabilities = new EnumMap<>(ZombieType.class);
+        probabilities.put(ZombieType.NORMAL, normalChance);
+        probabilities.put(ZombieType.FAST, fastChance);
+        probabilities.put(ZombieType.FAT, fatChance);
+        probabilities.put(ZombieType.TANK, tankChance);
+        return probabilities;
     }
-    public void spawnZombie() {
-        Random random = new Random();
-        int row = random.nextInt(ROWS);
-
-        Wave wave = waves.get(currentWave - 1);
-
-        Zombie zombie;
-        double rand = Math.random();
-
-        double normalLimit = wave.getNormalChance();
-        double fastLimit = normalLimit + wave.getFastChance();
-        double fatLimit = fastLimit + wave.getFatChance();
-
-        if (rand < normalLimit) {
-            zombie = new Zombie(row);
-        } else if (rand < fastLimit) {
-            zombie = new FastZombie(row);
-        } else if (rand < fatLimit) {
-            zombie = new FatZombie(row);
-        } else {
-            zombie = new TankZombie(row);
-        }
+    private void configureWave(Wave wave) {
+        zombiesPerWave = wave.getTotalZombies();
+        spawnIntervalSeconds = wave.getSpawnInterval();
+    }
+    private void spawnZombie(Wave wave) {
+        int row = ThreadLocalRandom.current().nextInt(ROWS);
+        ZombieType zombieType = wave.pickZombieType();
+        Zombie zombie = ZombieFactory.createZombie(zombieType, row);
 
         zombies.add(zombie);
 
@@ -217,9 +117,34 @@ public class GameBoard extends GridPane {
 
         zombie.getView().setTranslateX(x);
         zombie.getView().setTranslateY(y);
+        zombie.getView().setMouseTransparent(true);
 
         getChildren().add(zombie.getView());
         startGameLoop(zombie);
+    }
+    private void spawnNextZombieInWave() {
+        if (zombiesSpawnedInWave >= zombiesPerWave) {
+            finishWaveSpawning();
+            return;
+        }
+
+        Wave wave = waves.get(currentWave - 1);
+        spawnZombie(wave);
+        zombiesSpawnedInWave++;
+        System.out.println("Zombie spawned in wave " + currentWave + ": " + zombiesSpawnedInWave + "/" + zombiesPerWave);
+
+        if (zombiesSpawnedInWave >= zombiesPerWave) {
+            finishWaveSpawning();
+        }
+    }
+    private void finishWaveSpawning() {
+        waveInProgress = false;
+
+        if (zombieSpawner != null) {
+            zombieSpawner.stop();
+        }
+
+        System.out.println("Wave " + currentWave + " spawn completed.");
     }
     public void startGameLoop(Zombie zombie) {
         Timeline timeline = new Timeline(
@@ -246,40 +171,34 @@ public class GameBoard extends GridPane {
     }
     
     public boolean checkCollisions(Zombie zombie) {
-    for (Plant plant : plants) {
-        if (zombie.getView().localToScene(zombie.getView().getBoundsInLocal())
-                .intersects(plant.getView().localToScene(plant.getView().getBoundsInLocal()))) {
+        Iterator<Plant> iterator = plants.iterator();
 
-            plant.takeDamage(zombie.getAttackDamage());
-            System.out.println("Zombie is attacking a plant!");
+        while (iterator.hasNext()) {
+            Plant plant = iterator.next();
 
-            if (plant.isDead()) {
-                plant.stopShooting();
-                if (plant.getView().getParent() instanceof StackPane parentCell) {//if that parent is a StackPane, store it in a variable called parentCell
-                    parentCell.getChildren().remove(plant.getView());//remove the plant from the cell that actually contains it
-                }
-                if (plant instanceof Sunflower) {
-                    ((Sunflower) plant).stopProduction();
-                }
-                if (plant instanceof WaterPlant) {
-                    ((WaterPlant) plant).stopProduction();
-                }
+            if (zombie.getView().localToScene(zombie.getView().getBoundsInLocal())
+                    .intersects(plant.getView().localToScene(plant.getView().getBoundsInLocal()))) {
 
-                plants.remove(plant);
-                zombie.startMoving();
-                System.out.println("Plant destroyed by zombie!");
+                plant.takeDamage(zombie.getAttackDamage());
+                System.out.println("Zombie is attacking a plant!");
+
+                if (plant.isDead()) {
+                    removePlant(plant, iterator);
+                    zombie.startMoving();
+                    System.out.println("Plant destroyed by zombie!");
+                }
+                return true;
             }
-            return true;
         }
-    }
 
-    return false;
+        return false;
     }
     public void shootFromPlant(Plant plant) {
         double bulletX = (plant.getCol() * CELL_WIDTH) + 110;
         double bulletY = (plant.getRow() * CELL_HEIGHT) - 25;
 
         Bullet bullet = new Bullet(bulletX, bulletY);
+        bullet.getView().setMouseTransparent(true);
         bullets.add(bullet);
 
         getChildren().add(bullet.getView());
@@ -332,6 +251,20 @@ public class GameBoard extends GridPane {
         }
     }
     public void startZombieSpawner() {
+        if (zombieSpawner != null) {
+            zombieSpawner.stop();
+        }
+
+        if (!waveInProgress || zombiesSpawnedInWave >= zombiesPerWave) {
+            return;
+        }
+
+        spawnNextZombieInWave();
+
+        if (!waveInProgress) {
+            return;
+        }
+
         zombieSpawner = new Timeline(
             new KeyFrame(Duration.seconds(spawnIntervalSeconds), e -> {
                 if (paused || gameOver) {
@@ -341,15 +274,7 @@ public class GameBoard extends GridPane {
                     return;
                 }
 
-                if (zombiesSpawnedInWave < zombiesPerWave) {
-                    spawnZombie();
-                    zombiesSpawnedInWave++;
-                    System.out.println("Zombie spawned in wave " + currentWave + ": " + zombiesSpawnedInWave + "/" + zombiesPerWave);
-                } else {
-                    waveInProgress = false;
-                    zombieSpawner.stop();
-                    System.out.println("Wave " + currentWave + " spawn completed.");
-                }
+                spawnNextZombieInWave();
             })
         );
 
@@ -396,14 +321,17 @@ public class GameBoard extends GridPane {
     public boolean isGameOver() {
         return gameOver;
     }
-    public void setSelectedPlantType(String type) {
+    public void setSelectedPlantType(PlantType type) {
         this.selectedPlantType = type;
-        System.out.println("Selected plant: " + type);
+        System.out.println("Selected plant: " + type.getIdentifier());
     }
-    public String getSelectedPlantType() {
+    public void setSelectedPlantType(String type) {
+        setSelectedPlantType(PlantType.fromIdentifier(type));
+    }
+    public PlantType getSelectedPlantType() {
         return selectedPlantType;
     }
-    public boolean isOnCooldown(String plantType) {
+    public boolean isOnCooldown(PlantType plantType) {
         long currentTime = System.currentTimeMillis();
 
         if (!plantCooldowns.containsKey(plantType)) {
@@ -411,6 +339,9 @@ public class GameBoard extends GridPane {
         }
 
         return currentTime < plantCooldowns.get(plantType);
+    }
+    public boolean isOnCooldown(String plantType) {
+        return isOnCooldown(PlantType.fromIdentifier(plantType));
     }
     public void addSunPoints(int amount) {
         sunPoints += amount;
@@ -425,6 +356,7 @@ public class GameBoard extends GridPane {
         double targetY = -150;
 
         Sun sun = new Sun(x, y, targetX, targetY);
+        sun.getView().setMouseTransparent(true);
         suns.add(sun);
         getChildren().add(sun.getView());
     }
@@ -452,13 +384,16 @@ public class GameBoard extends GridPane {
         waterDrops.add(drop);
         getChildren().add(drop.getView());
     }
-    public long getRemainingCooldownMillis(String plantType) {
+    public long getRemainingCooldownMillis(PlantType plantType) {
         if (!plantCooldowns.containsKey(plantType)) {
             return 0;
         }
 
         long remaining = plantCooldowns.get(plantType) - System.currentTimeMillis();
         return Math.max(0, remaining);
+    }
+    public long getRemainingCooldownMillis(String plantType) {
+        return getRemainingCooldownMillis(PlantType.fromIdentifier(plantType));
     }
     public boolean isWaveCleared() {
         return !waveInProgress && zombies.isEmpty();
@@ -484,8 +419,7 @@ public class GameBoard extends GridPane {
         waveInProgress = true;
 
         Wave wave = waves.get(currentWave - 1);
-        zombiesPerWave = wave.getTotalZombies();
-        spawnIntervalSeconds = wave.getSpawnInterval();
+        configureWave(wave);
 
         System.out.println("Wave " + currentWave + " will start soon...");
 
@@ -631,5 +565,66 @@ public class GameBoard extends GridPane {
     public void setGameWon(boolean gameWon){
         this.gameWon = gameWon;
     }
+    public void setPlantRemovedHandler(Consumer<Plant> plantRemovedHandler) {
+        this.plantRemovedHandler = plantRemovedHandler;
+    }
+    public Plant placePlantAt(int row, int col) {
+        if (paused || gameOver) {
+            return null;
+        }
 
+        BoardCell cell = cells[row][col];
+
+        if (cell.isOccupied()) {
+            return null;
+        }
+
+        if (isOnCooldown(selectedPlantType)) {
+            System.out.println(selectedPlantType.getIdentifier() + " is on cooldown!");
+            return null;
+        }
+
+        if (sunPoints < selectedPlantType.getSunCost() || waterPoints < selectedPlantType.getWaterCost()) {
+            System.out.println("Not enough resources!");
+            return null;
+        }
+
+        Plant plant = PlantFactory.createPlant(selectedPlantType, row, col, this);
+
+        sunPoints -= selectedPlantType.getSunCost();
+        waterPoints -= selectedPlantType.getWaterCost();
+
+        plantCooldowns.put(
+                selectedPlantType,
+                System.currentTimeMillis() + (long) (selectedPlantType.getCooldown() * 1000)
+        );
+
+        cell.setOccupant(plant);
+        plants.add(plant);
+
+        startShooting(plant);
+
+        System.out.println("Placed " + selectedPlantType.getIdentifier() + " at row " + row + ", col " + col);
+
+        return plant;
+    }
+
+    private void removePlant(Plant plant, Iterator<Plant> iterator) {
+        plant.stopShooting();
+
+        if (plant instanceof Sunflower) {
+            ((Sunflower) plant).stopProduction();
+        }
+
+        if (plant instanceof WaterPlant) {
+            ((WaterPlant) plant).stopProduction();
+        }
+
+        cells[plant.getRow()][plant.getCol()].clearOccupant();
+        iterator.remove();
+
+        if (plantRemovedHandler != null) {
+            plantRemovedHandler.accept(plant);
+        }
+    }
 }

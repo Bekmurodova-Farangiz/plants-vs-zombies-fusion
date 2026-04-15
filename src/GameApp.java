@@ -133,10 +133,30 @@ public class GameApp extends Application {
         mainMenuButton.setFocusTraversable(false);
         restartButton.setFocusTraversable(false);
 
-        PlantCard peaShooterCard = new PlantCard("PeaShooter", "file:src/assets/peashooter.png", 50, 20);
-        PlantCard wallPlantCard = new PlantCard("WallPlant", "file:src/assets/wallplant.png", 50, 40);
-        PlantCard sunflowerCard = new PlantCard("Sunflower", "file:src/assets/sunflower.png", 50, 10);
-        PlantCard waterPlantCard = new PlantCard("WaterPlant", "file:src/assets/waterplant1.png", 50, 0);
+        PlantCard peaShooterCard = new PlantCard(
+                PlantType.PEA_SHOOTER.getIdentifier(),
+                PlantType.PEA_SHOOTER.getImagePath(),
+                PlantType.PEA_SHOOTER.getSunCost(),
+                PlantType.PEA_SHOOTER.getWaterCost()
+        );
+        PlantCard wallPlantCard = new PlantCard(
+                PlantType.WALL_PLANT.getIdentifier(),
+                PlantType.WALL_PLANT.getImagePath(),
+                PlantType.WALL_PLANT.getSunCost(),
+                PlantType.WALL_PLANT.getWaterCost()
+        );
+        PlantCard sunflowerCard = new PlantCard(
+                PlantType.SUNFLOWER.getIdentifier(),
+                PlantType.SUNFLOWER.getImagePath(),
+                PlantType.SUNFLOWER.getSunCost(),
+                PlantType.SUNFLOWER.getWaterCost()
+        );
+        PlantCard waterPlantCard = new PlantCard(
+                PlantType.WATER_PLANT.getIdentifier(),
+                PlantType.WATER_PLANT.getImagePath(),
+                PlantType.WATER_PLANT.getSunCost(),
+                PlantType.WATER_PLANT.getWaterCost()
+        );
 
         // Default selected style
         peaShooterCard.setSelected(true);
@@ -225,7 +245,7 @@ public class GameApp extends Application {
             restartButton.setVisible(false);
 
             // Default selected plant when game starts
-            board.setSelectedPlantType("PeaShooter");
+            board.setSelectedPlantType(PlantType.PEA_SHOOTER);
             peaShooterCard.setSelected(true);
             wallPlantCard.setSelected(false);
             sunflowerCard.setSelected(false);
@@ -241,7 +261,7 @@ public class GameApp extends Application {
                 gameOverLabel.setText("");
                 restartButton.setVisible(false);
 
-                newBoard.setSelectedPlantType("PeaShooter");
+                newBoard.setSelectedPlantType(PlantType.PEA_SHOOTER);
                 peaShooterCard.setSelected(true);
                 wallPlantCard.setSelected(false);
                 sunflowerCard.setSelected(false);
@@ -311,10 +331,10 @@ public class GameApp extends Application {
                     flag3.setStyle("-fx-font-size: 18px; -fx-text-fill: " + (currentWave >= 3 ? "red;" : "gray;"));
                     sunLabel.setText("" + boardRef[0].getSunPoints());
                     waterLabel.setText("" + boardRef[0].getWaterPoints());
-                    peaShooterCard.setOnCooldown(boardRef[0].getRemainingCooldownMillis("PeaShooter") > 0);
-                    wallPlantCard.setOnCooldown(boardRef[0].getRemainingCooldownMillis("WallPlant") > 0);
-                    sunflowerCard.setOnCooldown(boardRef[0].getRemainingCooldownMillis("Sunflower") > 0);
-                    waterPlantCard.setOnCooldown(boardRef[0].getRemainingCooldownMillis("WaterPlant") > 0);
+                    peaShooterCard.setOnCooldown(boardRef[0].getRemainingCooldownMillis(PlantType.PEA_SHOOTER) > 0);
+                    wallPlantCard.setOnCooldown(boardRef[0].getRemainingCooldownMillis(PlantType.WALL_PLANT) > 0);
+                    sunflowerCard.setOnCooldown(boardRef[0].getRemainingCooldownMillis(PlantType.SUNFLOWER) > 0);
+                    waterPlantCard.setOnCooldown(boardRef[0].getRemainingCooldownMillis(PlantType.WATER_PLANT) > 0);
                     waveProgressBar.setProgress(boardRef[0].getWaveProgress());
 
                     if (boardRef[0].isGameOver()) {
@@ -429,14 +449,27 @@ public class GameApp extends Application {
             double designWidth,
             double designHeight
     ) {
+        GameBoardView boardView = new GameBoardView();
+        boardView.setCellClickHandler((row, col) -> {
+            Plant plant = board.placePlantAt(row, col);
 
+            if (plant != null) {
+                boardView.addPlantToCell(row, col, plant);
+            }
+        });
+        board.setPlantRemovedHandler(boardView::removePlantFromCell);
+            
         Pane battlefieldPane = new Pane();
         battlefieldPane.setPrefSize(1600, 700);
 
-        board.setLayoutX(57);
-        board.setLayoutY(7);
+        boardView.setLayoutX(40);
+        boardView.setLayoutY(-15);
 
-        battlefieldPane.getChildren().addAll(board, waveBox, winOverlay);
+        board.setLayoutX(40);
+        board.setLayoutY(-15);
+        board.setPickOnBounds(false);
+
+        battlefieldPane.getChildren().addAll(boardView, board, waveBox, winOverlay);
 
         waveBox.setLayoutX(1200);
         waveBox.setLayoutY(670);
@@ -470,7 +503,7 @@ public class GameApp extends Application {
     ) {
         peaShooterCard.setOnMouseClicked(e -> {
             if (boardRef[0] != null) {
-                boardRef[0].setSelectedPlantType("PeaShooter");
+                boardRef[0].setSelectedPlantType(PlantType.PEA_SHOOTER);
             }
             peaShooterCard.setSelected(true);
             wallPlantCard.setSelected(false);
@@ -480,7 +513,7 @@ public class GameApp extends Application {
 
         wallPlantCard.setOnMouseClicked(e -> {
             if (boardRef[0] != null) {
-                boardRef[0].setSelectedPlantType("WallPlant");
+                boardRef[0].setSelectedPlantType(PlantType.WALL_PLANT);
             }
             peaShooterCard.setSelected(false);
             wallPlantCard.setSelected(true);
@@ -490,7 +523,7 @@ public class GameApp extends Application {
 
         sunflowerCard.setOnMouseClicked(e -> {
             if (boardRef[0] != null) {
-                boardRef[0].setSelectedPlantType("Sunflower");
+                boardRef[0].setSelectedPlantType(PlantType.SUNFLOWER);
             }
             peaShooterCard.setSelected(false);
             wallPlantCard.setSelected(false);
@@ -500,7 +533,7 @@ public class GameApp extends Application {
 
         waterPlantCard.setOnMouseClicked(e -> {
             if (boardRef[0] != null) {
-                boardRef[0].setSelectedPlantType("WaterPlant");
+                boardRef[0].setSelectedPlantType(PlantType.WATER_PLANT);
             }
             peaShooterCard.setSelected(false);
             wallPlantCard.setSelected(false);
