@@ -7,8 +7,9 @@ import javafx.scene.image.ImageView;
 public class Plant {
 
     private static final double DEFAULT_VIEW_SIZE = Math.min(BoardMetrics.CELL_WIDTH, BoardMetrics.CELL_HEIGHT) * 0.83;
+    private static final Image DEFAULT_IMAGE = ImageAssets.load("file:src/assets/peashooter.png");
 
-    private ImageView view;
+    private final ImageView view;
     private int health;
     private int row;
     private int col;
@@ -19,7 +20,7 @@ public class Plant {
     private int waterCost;
     // constructor
     public Plant(int row, int col) {
-        view = new ImageView(new Image("file:src/assets/peashooter.png"));
+        view = new ImageView(DEFAULT_IMAGE);
         view.setPreserveRatio(true);
         view.setSmooth(true);
         view.setFitWidth(DEFAULT_VIEW_SIZE);
@@ -48,7 +49,7 @@ public class Plant {
         return view;
     }
     public final void configureView() {
-        view.setPreserveRatio(true);
+        view.setPreserveRatio(shouldPreserveAspectRatio());
         view.setSmooth(true);
         view.setFitWidth(getVisualFitWidth());
         view.setFitHeight(getVisualFitHeight());
@@ -93,6 +94,22 @@ public class Plant {
     public double getVisualOffsetY() {
         return 0;
     }
+    public boolean shouldPreserveAspectRatio() {
+        return true;
+    }
+    public boolean blocksZombies() {
+        return true;
+    }
+    public void onPlaced(GameBoard board) {
+    }
+    public void onRemoved() {
+    }
+    public void onShotFired() {
+    }
+    public void onGamePaused() {
+    }
+    public void onGameResumed(GameBoard board) {
+    }
     public void setShootingTimeline(Timeline shootingTimeline) {
         this.shootingTimeline = shootingTimeline;
     }
@@ -121,8 +138,12 @@ public class Plant {
     public void setCooldown(double cooldown) {
         this.cooldown = cooldown;
     }
+    public void setPlantImage(Image image) {
+        view.setViewport(null);
+        view.setImage(image);
+    }
     public void setPlantImage(String imagePath) {
-        view.setImage(new Image(imagePath));
+        setPlantImage(ImageAssets.load(imagePath));
     }
     public int getWaterCost() {
     return waterCost;

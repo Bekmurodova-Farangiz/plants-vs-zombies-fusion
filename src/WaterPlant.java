@@ -1,77 +1,133 @@
 import javafx.animation.KeyFrame;
 import javafx.animation.Timeline;
+import javafx.scene.image.Image;
 import javafx.util.Duration;
 
 public class WaterPlant extends Plant {
 
+    private static final Image[] ANIMATION_FRAMES = ImageAssets.loadAll(
+        "file:src/assets/waterplant1.png",
+        "file:src/assets/waterplant2.png",
+        "file:src/assets/waterplant3.png",
+        "file:src/assets/waterplant4.png"
+    );
+    private static final Duration PRODUCTION_CYCLE = Duration.seconds(10);
+    private static final Duration FRAME_DURATION = Duration.seconds(0.3);
+
     private Timeline waterTimeline;
     private Timeline animationTimeline;
-    private int currentFrame = 1;
+    private GameBoard board;
+    private int currentFrame;
 
     public WaterPlant(int row, int col, GameBoard board) {
         super(row, col);
 
         setShootingInterval(0);
         setCooldown(2.5);
-        setPlantImage("file:src/assets/waterplant1.png");
         setWaterCost(0);
+        resetToIdleFrame();
 
-        waterTimeline = new Timeline(
-            new KeyFrame(Duration.seconds(10), e -> {
-                if (!isDead()) {
-                    board.spawnWaterDropFromPlant(this);
-                    System.out.println("WaterPlant produced water! +25");
-                }
-            })
-        );
-
-        waterTimeline.setCycleCount(Timeline.INDEFINITE);
-        waterTimeline.play();
+        startWaterProduction(board);
         startAnimation();
     }
-    private void startAnimation() {
-        animationTimeline = new Timeline(
-            new KeyFrame(Duration.seconds(0.3), e -> {
-                currentFrame++;
 
-                if (currentFrame > 4) {
-                    currentFrame = 1;
-                }
+    private void startWaterProduction(GameBoard board) {
+        this.board = board;
+        stopTimeline(waterTimeline);
 
-                setPlantImage("file:src/assets/waterplant" + currentFrame + ".png");
-            })
+        waterTimeline = new Timeline(
+            new KeyFrame(PRODUCTION_CYCLE, e -> produceWater())
         );
+        waterTimeline.setCycleCount(Timeline.INDEFINITE);
+        waterTimeline.playFromStart();
+    }
 
+    private void startAnimation() {
+        stopTimeline(animationTimeline);
+
+        animationTimeline = new Timeline(
+            new KeyFrame(FRAME_DURATION, e -> advanceAnimationFrame())
+        );
         animationTimeline.setCycleCount(Timeline.INDEFINITE);
-        animationTimeline.play();
+        animationTimeline.playFromStart();
+    }
+
+    @Override
+    public void onGamePaused() {
+        stopProduction();
+    }
+
+    @Override
+    public void onGameResumed(GameBoard board) {
+        resumeProduction(board);
+    }
+
+    @Override
+    public void onRemoved() {
+        stopTimeline(waterTimeline);
+        stopTimeline(animationTimeline);
+        waterTimeline = null;
+        animationTimeline = null;
+        board = null;
     }
 
     public void stopProduction() {
-        if (waterTimeline != null) {
-            waterTimeline.stop();
+        pauseTimeline(waterTimeline);
+        pauseTimeline(animationTimeline);
+    }
+
+    public void resumeProduction(GameBoard board) {
+        this.board = board;
+
+        if (isDead()) {
+            return;
         }
 
-        if (animationTimeline != null) {
-            animationTimeline.stop();
+        if (waterTimeline == null) {
+            startWaterProduction(board);
+        } else if (waterTimeline.getStatus() == Timeline.Status.PAUSED) {
+            waterTimeline.play();
+        } else if (waterTimeline.getStatus() == Timeline.Status.STOPPED) {
+            startWaterProduction(board);
+        }
+
+        if (animationTimeline == null) {
+            startAnimation();
+        } else if (animationTimeline.getStatus() == Timeline.Status.PAUSED) {
+            animationTimeline.play();
+        } else if (animationTimeline.getStatus() == Timeline.Status.STOPPED) {
+            startAnimation();
         }
     }
-    public void resumeProduction(GameBoard board) {
-        if (waterTimeline == null || waterTimeline.getStatus() != Timeline.Status.RUNNING) {
-            waterTimeline = new Timeline(
-                new KeyFrame(Duration.seconds(5), e -> {
-                    if (!isDead()) {
-                        board.spawnWaterDropFromPlant(this);
-                        System.out.println("WaterPlant produced water!");
-                    }
-                })
-            );
 
-            waterTimeline.setCycleCount(Timeline.INDEFINITE);
-            waterTimeline.play();
+    private void produceWater() {
+        if (isDead() || board == null) {
+            return;
         }
 
-        if (animationTimeline == null || animationTimeline.getStatus() != Timeline.Status.RUNNING) {
-            startAnimation();
+        board.spawnWaterDropFromPlant(this);
+        System.out.println("WaterPlant produced water! +25");
+    }
+
+    private void advanceAnimationFrame() {
+        currentFrame = (currentFrame + 1) % ANIMATION_FRAMES.length;
+        getView().setImage(ANIMATION_FRAMES[currentFrame]);
+    }
+
+    private void resetToIdleFrame() {
+        currentFrame = 0;
+        getView().setImage(ANIMATION_FRAMES[currentFrame]);
+    }
+
+    private void pauseTimeline(Timeline timeline) {
+        if (timeline != null && timeline.getStatus() == Timeline.Status.RUNNING) {
+            timeline.pause();
+        }
+    }
+
+    private void stopTimeline(Timeline timeline) {
+        if (timeline != null) {
+            timeline.stop();
         }
     }
 }

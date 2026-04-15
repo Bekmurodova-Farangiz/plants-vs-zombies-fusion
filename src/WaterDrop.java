@@ -3,7 +3,9 @@ import javafx.scene.image.ImageView;
 
 public class WaterDrop {
 
-    private ImageView view;
+    private static final Image WATER_DROP_IMAGE = ImageAssets.load("file:src/assets/water.png");
+
+    private final ImageView view;
     private int value;
 
     private boolean collected = false;
@@ -11,7 +13,7 @@ public class WaterDrop {
     private int animationFrames = 0;
 
     public WaterDrop(double x, double y) {
-        view = new ImageView(new Image("file:src/assets/water.png"));
+        view = new ImageView(WATER_DROP_IMAGE);
         view.setFitWidth(80);
         view.setFitHeight(120);
 

@@ -13,6 +13,8 @@ public final class PlantFactory {
                 return new Sunflower(row, col, board);
             case WATER_PLANT:
                 return new WaterPlant(row, col, board);
+            case BOMB_PLANT:
+                return new BombPlant(row, col);
             default:
                 throw new IllegalArgumentException("Unsupported plant type: " + type);
         }

@@ -3,14 +3,20 @@ import javafx.scene.image.ImageView;
 
 public class Sun {
 
-    private ImageView view;
+    private static final Image SUN_IMAGE = ImageAssets.load("file:src/assets/sun.png");
+
+    private final ImageView view;
     private int value;
 
     private double targetX;
     private double targetY;
 
     public Sun(double x, double y, double targetX, double targetY) {
-        view = new ImageView(new Image("file:src/assets/sun.png"));
+        this(x, y, targetX, targetY, 25);
+    }
+
+    public Sun(double x, double y, double targetX, double targetY, int value) {
+        view = new ImageView(SUN_IMAGE);
 
         view.setFitWidth(90);
         view.setFitHeight(60);
@@ -21,7 +27,7 @@ public class Sun {
         this.targetX = targetX;
         this.targetY = targetY;
 
-        value = 25;
+        this.value = value;
     }
 
     public void update() {

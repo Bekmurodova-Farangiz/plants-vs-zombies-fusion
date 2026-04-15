@@ -62,7 +62,10 @@ public class GameBoardView extends GridPane {
         plant.getView().setMouseTransparent(true);
         plant.configureView();
         StackPane.setAlignment(plant.getView(), Pos.CENTER);
-        cells[row][col].getChildren().add(plant.getView());
+
+        if (!cells[row][col].getChildren().contains(plant.getView())) {
+            cells[row][col].getChildren().add(plant.getView());
+        }
     }
     public void removePlantFromCell(Plant plant) {
         cells[plant.getRow()][plant.getCol()].getChildren().remove(plant.getView());

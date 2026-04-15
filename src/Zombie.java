@@ -5,7 +5,9 @@ import javafx.scene.image.ImageView;
 
 public class Zombie {
 
-    private ImageView view;
+    private static final Image DEFAULT_IMAGE = ImageAssets.load("file:src/assets/zombie.png");
+
+    private final ImageView view;
     private int health;
     private boolean moving;
     private Timeline movementTimeline;
@@ -15,7 +17,7 @@ public class Zombie {
 
     //constructor
     public Zombie(int row) {
-        view = new ImageView(new Image("file:src/assets/zombie.png"));
+        view = new ImageView(DEFAULT_IMAGE);
         view.setFitWidth(130);
         view.setFitHeight(130);
         health = 100;
@@ -70,8 +72,11 @@ public class Zombie {
     public void setHealth(int health) {
         this.health = health;
     }
+    public void setZombieImage(Image image) {
+        view.setImage(image);
+    }
     public void setZombieImage(String imagePath) {
-        view.setImage(new Image(imagePath));
+        setZombieImage(ImageAssets.load(imagePath));
     }
     public void pauseActions() {
         if (movementTimeline != null) {

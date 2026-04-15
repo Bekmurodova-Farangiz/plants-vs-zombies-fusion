@@ -11,7 +11,6 @@ import java.util.List;
 import java.util.HashMap;
 import java.util.Map;
 import java.util.concurrent.ThreadLocalRandom;
-import javafx.animation.PauseTransition;
 import java.util.function.Consumer;
 public class GameBoard extends Pane {
 
@@ -19,6 +18,8 @@ public class GameBoard extends Pane {
     private static final int COLUMNS = BoardMetrics.COLUMNS;
     private static final int CELL_WIDTH = BoardMetrics.CELL_WIDTH;
     private static final int CELL_HEIGHT = BoardMetrics.CELL_HEIGHT;
+    private static final double INITIAL_PREPARATION_SECONDS = 12.0;
+    private static final double BETWEEN_WAVES_BREAK_SECONDS = 5.0;
     private List<Plant> plants = new ArrayList<>();    //plants stores all plant objects on the board
     private List<Zombie> zombies = new ArrayList<>(); //zombies stores all zombie objects on the board
     private List<Bullet> bullets = new ArrayList<>();  //bullets added to the storage
@@ -28,6 +29,7 @@ public class GameBoard extends Pane {
     private int sunPoints = 250; //Player's starting points
     private int waterPoints = 100;
     private Timeline zombieSpawner;
+    private Timeline waveStartDelayTimeline;
     private Timeline sunGenerator;
     private PlantType selectedPlantType = PlantType.PEA_SHOOTER;
     private Map<PlantType, Long> plantCooldowns = new HashMap<>();
@@ -52,7 +54,7 @@ public class GameBoard extends Pane {
         initializeWaves();
         totalWaves = waves.size();
         configureWave(waves.get(0));
-        startZombieSpawner();
+        scheduleCurrentWaveStart(INITIAL_PREPARATION_SECONDS, "Prepare your defenses before Wave 1.");
         startGlobalLoop();
     }
     private void initializeCells() {
@@ -66,23 +68,23 @@ public class GameBoard extends Pane {
 
         // Wave 1 (easy)
         waves.add(new Wave(
-            8,      // zombies
-            3.5,    // spawn interval
-            createZombieProbabilities(0.7, 0.25, 0.05, 0.0)
+            6,
+            4.5,
+            createZombieProbabilities(0.85, 0.15, 0.0, 0.0)
         ));
 
         // Wave 2 (medium)
         waves.add(new Wave(
-            12,
-            2.5,
-            createZombieProbabilities(0.45, 0.30, 0.20, 0.05)
+            10,
+            3.0,
+            createZombieProbabilities(0.50, 0.30, 0.20, 0.0)
         ));
 
         // Wave 3 (hard)
         waves.add(new Wave(
-            16,
-            1.8,
-            createZombieProbabilities(0.25, 0.25, 0.25, 0.25)
+            14,
+            2.2,
+            createZombieProbabilities(0.35, 0.25, 0.20, 0.20)
         ));
     }
     private Map<ZombieType, Double> createZombieProbabilities(
@@ -176,6 +178,10 @@ public class GameBoard extends Pane {
         while (iterator.hasNext()) {
             Plant plant = iterator.next();
 
+            if (!plant.blocksZombies()) {
+                continue;
+            }
+
             if (zombie.getView().localToScene(zombie.getView().getBoundsInLocal())
                     .intersects(plant.getView().localToScene(plant.getView().getBoundsInLocal()))) {
 
@@ -193,7 +199,7 @@ public class GameBoard extends Pane {
 
         return false;
     }
-    public void shootFromPlant(Plant plant) {
+    public void fireBulletFromPlant(Plant plant) {
         double bulletX = plant.getShootOriginX() - (Bullet.WIDTH / 2.0);
         double bulletY = plant.getShootOriginY() - (Bullet.HEIGHT / 2.0);
 
@@ -202,6 +208,15 @@ public class GameBoard extends Pane {
         bullets.add(bullet);
 
         getChildren().add(bullet.getView());
+    }
+    public void shootFromPlant(Plant plant) {
+        if (plant instanceof PeaShooter) {
+            ((PeaShooter) plant).playShootAnimation(this);
+            return;
+        }
+
+        plant.onShotFired();
+        fireBulletFromPlant(plant);
     }
     // auto shooting system 
     public void startShooting(Plant plant) {
@@ -240,16 +255,81 @@ public class GameBoard extends Pane {
                     System.out.println("Bullet hit zombie!");
 
                     if (zombie.isDead()) {
-                        zombie.stopAllActions();
-                        getChildren().remove(zombie.getView());
-                        zombies.remove(j);
-                        System.out.println("Zombie died!");
+                        removeZombieAt(j);
                     }
                     break;
                 }
             }
         }
     }
+    public void damageZombiesInArea(int centerRow, int centerCol, int rowRadius, int colRadius, int damage) {
+        damageZombiesInArea(centerRow, centerCol, BlastArea.rectangle(rowRadius, colRadius), damage);
+    }
+
+    public void damageZombiesInArea(int centerRow, int centerCol, BlastArea blastArea, int damage) {
+        for (int i = zombies.size() - 1; i >= 0; i--) {
+            Zombie zombie = zombies.get(i);
+            int zombieCol = getZombieColumn(zombie);
+
+            if (!blastArea.contains(centerRow, centerCol, zombie.getRow(), zombieCol)) {
+                continue;
+            }
+
+            zombie.takeDamage(damage);
+
+            if (zombie.isDead()) {
+                removeZombieAt(i);
+            }
+        }
+    }
+
+    private int getZombieColumn(Zombie zombie) {
+        double zombieWidth = zombie.getView().getBoundsInLocal().getWidth();
+        double zombieCenterX = zombie.getView().getTranslateX() + (zombieWidth / 2.0);
+        return (int) Math.floor(zombieCenterX / CELL_WIDTH);
+    }
+
+    private void removeZombieAt(int zombieIndex) {
+        Zombie zombie = zombies.get(zombieIndex);
+        zombie.stopAllActions();
+        getChildren().remove(zombie.getView());
+        zombies.remove(zombieIndex);
+        System.out.println("Zombie died!");
+    }
+    private void scheduleCurrentWaveStart(double delaySeconds, String announcement) {
+        stopWaveStartDelay();
+        waveInProgress = true;
+
+        if (announcement != null && !announcement.isEmpty()) {
+            System.out.println(announcement);
+        }
+
+        waveStartDelayTimeline = new Timeline(
+            new KeyFrame(Duration.seconds(delaySeconds), e -> {
+                waveStartDelayTimeline = null;
+                beginCurrentWave();
+            })
+        );
+        waveStartDelayTimeline.setCycleCount(1);
+        waveStartDelayTimeline.play();
+    }
+
+    private void beginCurrentWave() {
+        if (paused || gameOver || gameWon) {
+            return;
+        }
+
+        System.out.println("Starting wave " + currentWave);
+        startZombieSpawner();
+    }
+
+    private void stopWaveStartDelay() {
+        if (waveStartDelayTimeline != null) {
+            waveStartDelayTimeline.stop();
+            waveStartDelayTimeline = null;
+        }
+    }
+
     public void startZombieSpawner() {
         if (zombieSpawner != null) {
             zombieSpawner.stop();
@@ -297,6 +377,7 @@ public class GameBoard extends Pane {
             if (zombieSpawner != null) {
                 zombieSpawner.stop();
             }
+            stopWaveStartDelay();
             if (sunGenerator != null) {
                 sunGenerator.stop();
             }
@@ -348,6 +429,9 @@ public class GameBoard extends Pane {
         System.out.println("Sun points: " + sunPoints);
     }
     public void spawnSunFromPlant(Plant plant) {
+        spawnSunFromPlant(plant, 25);
+    }
+    public void spawnSunFromPlant(Plant plant, int amount) {
         double x = plant.getCenterX();
         double y = plant.getCenterY();
 
@@ -355,7 +439,7 @@ public class GameBoard extends Pane {
         double targetX = 20;
         double targetY = -150;
 
-        Sun sun = new Sun(x, y, targetX, targetY);
+        Sun sun = new Sun(x, y, targetX, targetY, amount);
         sun.getView().setMouseTransparent(true);
         suns.add(sun);
         getChildren().add(sun.getView());
@@ -405,6 +489,7 @@ public class GameBoard extends Pane {
             if (zombieSpawner != null) {
                 zombieSpawner.stop();
             }
+            stopWaveStartDelay();
 
             if (globalLoop != null) {
                 globalLoop.stop();
@@ -416,19 +501,11 @@ public class GameBoard extends Pane {
 
         currentWave++;
         zombiesSpawnedInWave = 0;
-        waveInProgress = true;
 
         Wave wave = waves.get(currentWave - 1);
         configureWave(wave);
 
-        System.out.println("Wave " + currentWave + " will start soon...");
-
-        PauseTransition breakBetweenWaves = new PauseTransition(Duration.seconds(5));
-        breakBetweenWaves.setOnFinished(e -> {
-            System.out.println("Starting wave " + currentWave);
-            startZombieSpawner();
-        });
-        breakBetweenWaves.play();
+        scheduleCurrentWaveStart(BETWEEN_WAVES_BREAK_SECONDS, "Wave " + currentWave + " will start soon...");
     }
     public int getCurrentWave() {
         return currentWave;
@@ -516,16 +593,13 @@ public class GameBoard extends Pane {
             zombieSpawner.pause();
         }
 
+        if (waveStartDelayTimeline != null) {
+            waveStartDelayTimeline.pause();
+        }
+
         for (Plant plant : plants) {
             plant.stopShooting();
-
-            if (plant instanceof Sunflower) {
-                ((Sunflower) plant).stopProduction();
-            }
-
-            if (plant instanceof WaterPlant) {
-                ((WaterPlant) plant).stopProduction();
-            }
+            plant.onGamePaused();
         }
         for (Zombie zombie : zombies) {
             zombie.pauseActions();
@@ -543,16 +617,13 @@ public class GameBoard extends Pane {
             zombieSpawner.play();
         }
 
+        if (waveStartDelayTimeline != null) {
+            waveStartDelayTimeline.play();
+        }
+
         for (Plant plant : plants) {
             startShooting(plant);
-
-            if (plant instanceof Sunflower) {
-                ((Sunflower) plant).resumeProduction(this);
-            }
-
-            if (plant instanceof WaterPlant) {
-                ((WaterPlant) plant).resumeProduction(this);
-            }
+            plant.onGameResumed(this);
         }
         for (Zombie zombie : zombies) {
             zombie.resumeActions();
@@ -576,6 +647,49 @@ public class GameBoard extends Pane {
         BoardCell cell = cells[row][col];
 
         if (cell.isOccupied()) {
+            return tryFusePlant(cell);
+        }
+
+        if (isOnCooldown(selectedPlantType)) {
+            System.out.println(selectedPlantType.getIdentifier() + " is on cooldown!");
+            return null;
+        }
+
+        if (!hasEnoughResources(selectedPlantType)) {
+            return null;
+        }
+
+        Plant plant = PlantFactory.createPlant(selectedPlantType, row, col, this);
+
+        consumeResourcesFor(selectedPlantType);
+        applyCooldownFor(selectedPlantType);
+
+        cell.setOccupant(plant);
+        plants.add(plant);
+
+        startShooting(plant);
+        plant.onPlaced(this);
+
+        System.out.println("Placed " + selectedPlantType.getIdentifier() + " at row " + row + ", col " + col);
+
+        return plant;
+    }
+
+    private Plant tryFusePlant(BoardCell cell) {
+        if (selectedPlantType != PlantType.SUNFLOWER) {
+            return null;
+        }
+
+        Plant occupant = cell.getOccupant();
+
+        if (!(occupant instanceof Sunflower)) {
+            return null;
+        }
+
+        Sunflower sunflower = (Sunflower) occupant;
+
+        if (!sunflower.canFuse()) {
+            System.out.println("Sunflower is already at maximum fusion level.");
             return null;
         }
 
@@ -584,44 +698,60 @@ public class GameBoard extends Pane {
             return null;
         }
 
-        if (sunPoints < selectedPlantType.getSunCost() || waterPoints < selectedPlantType.getWaterCost()) {
-            System.out.println("Not enough resources!");
+        if (!hasEnoughResources(selectedPlantType)) {
             return null;
         }
 
-        Plant plant = PlantFactory.createPlant(selectedPlantType, row, col, this);
+        consumeResourcesFor(selectedPlantType);
+        applyCooldownFor(selectedPlantType);
+        sunflower.fuse();
 
-        sunPoints -= selectedPlantType.getSunCost();
-        waterPoints -= selectedPlantType.getWaterCost();
+        System.out.println("Fused Sunflower at row " + cell.getRow() + ", col " + cell.getCol());
+        return sunflower;
+    }
 
+    private boolean hasEnoughResources(PlantType plantType) {
+        if (sunPoints < plantType.getSunCost() || waterPoints < plantType.getWaterCost()) {
+            System.out.println("Not enough resources!");
+            return false;
+        }
+
+        return true;
+    }
+
+    private void consumeResourcesFor(PlantType plantType) {
+        sunPoints -= plantType.getSunCost();
+        waterPoints -= plantType.getWaterCost();
+    }
+
+    private void applyCooldownFor(PlantType plantType) {
         plantCooldowns.put(
-                selectedPlantType,
-                System.currentTimeMillis() + (long) (selectedPlantType.getCooldown() * 1000)
+                plantType,
+                System.currentTimeMillis() + (long) (plantType.getCooldown() * 1000)
         );
+    }
 
-        cell.setOccupant(plant);
-        plants.add(plant);
+    public void removePlant(Plant plant) {
+        if (plant == null) {
+            return;
+        }
 
-        startShooting(plant);
+        if (!plants.remove(plant)) {
+            return;
+        }
 
-        System.out.println("Placed " + selectedPlantType.getIdentifier() + " at row " + row + ", col " + col);
-
-        return plant;
+        cleanupRemovedPlant(plant);
     }
 
     private void removePlant(Plant plant, Iterator<Plant> iterator) {
-        plant.stopShooting();
-
-        if (plant instanceof Sunflower) {
-            ((Sunflower) plant).stopProduction();
-        }
-
-        if (plant instanceof WaterPlant) {
-            ((WaterPlant) plant).stopProduction();
-        }
-
-        cells[plant.getRow()][plant.getCol()].clearOccupant();
         iterator.remove();
+        cleanupRemovedPlant(plant);
+    }
+
+    private void cleanupRemovedPlant(Plant plant) {
+        plant.stopShooting();
+        cells[plant.getRow()][plant.getCol()].clearOccupant();
+        plant.onRemoved();
 
         if (plantRemovedHandler != null) {
             plantRemovedHandler.accept(plant);

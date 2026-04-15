@@ -6,7 +6,6 @@ import javafx.scene.Group;
 import javafx.scene.Scene;
 import javafx.scene.control.Button;
 import javafx.scene.control.Label;
-import javafx.scene.image.Image;
 import javafx.scene.image.ImageView;
 import javafx.scene.layout.HBox;
 import javafx.scene.layout.Pane;
@@ -34,7 +33,7 @@ public class GameApp extends Application {
         final GameBoard[] boardRef = {null};
 
         // Top HUD labels
-        ImageView sunStorageIcon = new ImageView(new Image("file:src/assets/sun.png"));
+        ImageView sunStorageIcon = new ImageView(ImageAssets.load("file:src/assets/sun.png"));
         sunStorageIcon.setFitWidth(120);
         sunStorageIcon.setFitHeight(120);
         sunStorageIcon.setPreserveRatio(true);
@@ -46,7 +45,7 @@ public class GameApp extends Application {
         sunBox.setSpacing(6);
         sunBox.setAlignment(Pos.CENTER_LEFT);
 
-        ImageView waterStorageIcon = new ImageView(new Image("file:src/assets/water.png"));
+        ImageView waterStorageIcon = new ImageView(ImageAssets.load("file:src/assets/water.png"));
         waterStorageIcon.setFitWidth(120);
         waterStorageIcon.setFitHeight(130);
         waterStorageIcon.setPreserveRatio(true);
@@ -86,7 +85,7 @@ public class GameApp extends Application {
         winRestartButton.setVisible(false);
 
         Button winMenuButton = new Button();
-        ImageView winMenuIcon = new ImageView(new Image("file:src/assets/menu_icon.png"));
+        ImageView winMenuIcon = new ImageView(ImageAssets.load("file:src/assets/menu_icon.png"));
         winMenuIcon.setFitWidth(55);
         winMenuIcon.setFitHeight(55);
         winMenuButton.setGraphic(winMenuIcon);
@@ -103,7 +102,7 @@ public class GameApp extends Application {
         restartButton.setStyle("-fx-font-size: 16px;");
         restartButton.setVisible(false);
 
-        ImageView pauseIcon = new ImageView(new Image("file:src/assets/pause_icon.png"));
+        ImageView pauseIcon = new ImageView(ImageAssets.load("file:src/assets/pause_icon.png"));
         pauseIcon.setFitWidth(100);
         pauseIcon.setFitHeight(100);
 
@@ -111,7 +110,7 @@ public class GameApp extends Application {
         pauseButton.setGraphic(pauseIcon);
         pauseButton.setStyle("-fx-background-color: transparent; -fx-padding: 0;");
 
-        ImageView resumeIcon = new ImageView(new Image("file:src/assets/resume_icon.png"));
+        ImageView resumeIcon = new ImageView(ImageAssets.load("file:src/assets/resume_icon.png"));
         resumeIcon.setFitWidth(100);
         resumeIcon.setFitHeight(100);
 
@@ -120,7 +119,7 @@ public class GameApp extends Application {
         resumeButton.setStyle("-fx-background-color: transparent; -fx-padding: 0;");
         resumeButton.setVisible(false);
 
-        ImageView menuIcon = new ImageView(new Image("file:src/assets/menu_icon.png"));
+        ImageView menuIcon = new ImageView(ImageAssets.load("file:src/assets/menu_icon.png"));
         menuIcon.setFitWidth(100);
         menuIcon.setFitHeight(100);
 
@@ -157,6 +156,12 @@ public class GameApp extends Application {
                 PlantType.WATER_PLANT.getSunCost(),
                 PlantType.WATER_PLANT.getWaterCost()
         );
+        PlantCard bombPlantCard = new PlantCard(
+                PlantType.BOMB_PLANT.getIdentifier(),
+                PlantType.BOMB_PLANT.getImagePath(),
+                PlantType.BOMB_PLANT.getSunCost(),
+                PlantType.BOMB_PLANT.getWaterCost()
+        );
 
         // Default selected style
         peaShooterCard.setSelected(true);
@@ -178,7 +183,8 @@ public class GameApp extends Application {
         peaShooterCard,
         wallPlantCard,
         sunflowerCard,
-        waterPlantCard
+        waterPlantCard,
+        bombPlantCard
         );
 
         plantPanel.setSpacing(10);
@@ -213,7 +219,7 @@ public class GameApp extends Application {
         gameSurface.setPrefSize(DESIGN_WIDTH, DESIGN_HEIGHT);
 
         // Background image for the whole game world
-        ImageView globalBg = new ImageView(new Image("file:src/assets/battlezone.png"));
+        ImageView globalBg = new ImageView(ImageAssets.load("file:src/assets/battlezone.png"));
         globalBg.setFitWidth(DESIGN_WIDTH);
         globalBg.setFitHeight(DESIGN_HEIGHT);
 
@@ -250,8 +256,9 @@ public class GameApp extends Application {
             wallPlantCard.setSelected(false);
             sunflowerCard.setSelected(false);
             waterPlantCard.setSelected(false);
+            bombPlantCard.setSelected(false);
             // Connect plant selection buttons to THIS board
-            setupPlantButtons(boardRef, peaShooterCard, wallPlantCard, sunflowerCard, waterPlantCard);
+            setupPlantButtons(boardRef, peaShooterCard, wallPlantCard, sunflowerCard, waterPlantCard, bombPlantCard);
 
             // Restart should also create a fresh new board
             restartButton.setOnAction(e2 -> {
@@ -266,8 +273,9 @@ public class GameApp extends Application {
                 wallPlantCard.setSelected(false);
                 sunflowerCard.setSelected(false);
                 waterPlantCard.setSelected(false);
+                bombPlantCard.setSelected(false);
 
-                setupPlantButtons(boardRef, peaShooterCard, wallPlantCard, sunflowerCard, waterPlantCard);
+                setupPlantButtons(boardRef, peaShooterCard, wallPlantCard, sunflowerCard, waterPlantCard, bombPlantCard);
                 
 
                 VBox newGameLayout = buildGameLayout(
@@ -335,6 +343,7 @@ public class GameApp extends Application {
                     wallPlantCard.setOnCooldown(boardRef[0].getRemainingCooldownMillis(PlantType.WALL_PLANT) > 0);
                     sunflowerCard.setOnCooldown(boardRef[0].getRemainingCooldownMillis(PlantType.SUNFLOWER) > 0);
                     waterPlantCard.setOnCooldown(boardRef[0].getRemainingCooldownMillis(PlantType.WATER_PLANT) > 0);
+                    bombPlantCard.setOnCooldown(boardRef[0].getRemainingCooldownMillis(PlantType.BOMB_PLANT) > 0);
                     waveProgressBar.setProgress(boardRef[0].getWaveProgress());
 
                     if (boardRef[0].isGameOver()) {
@@ -499,7 +508,8 @@ public class GameApp extends Application {
             PlantCard peaShooterCard,
             PlantCard wallPlantCard,
             PlantCard sunflowerCard,
-            PlantCard waterPlantCard
+            PlantCard waterPlantCard,
+            PlantCard bombPlantCard
     ) {
         peaShooterCard.setOnMouseClicked(e -> {
             if (boardRef[0] != null) {
@@ -509,6 +519,7 @@ public class GameApp extends Application {
             wallPlantCard.setSelected(false);
             sunflowerCard.setSelected(false);
             waterPlantCard.setSelected(false);
+            bombPlantCard.setSelected(false);
         });
 
         wallPlantCard.setOnMouseClicked(e -> {
@@ -519,6 +530,7 @@ public class GameApp extends Application {
             wallPlantCard.setSelected(true);
             sunflowerCard.setSelected(false);
             waterPlantCard.setSelected(false);
+            bombPlantCard.setSelected(false);
         });
 
         sunflowerCard.setOnMouseClicked(e -> {
@@ -529,6 +541,7 @@ public class GameApp extends Application {
             wallPlantCard.setSelected(false);
             sunflowerCard.setSelected(true);
             waterPlantCard.setSelected(false);
+            bombPlantCard.setSelected(false);
         });
 
         waterPlantCard.setOnMouseClicked(e -> {
@@ -539,6 +552,18 @@ public class GameApp extends Application {
             wallPlantCard.setSelected(false);
             sunflowerCard.setSelected(false);
             waterPlantCard.setSelected(true);
+            bombPlantCard.setSelected(false);
+        });
+
+        bombPlantCard.setOnMouseClicked(e -> {
+            if (boardRef[0] != null) {
+                boardRef[0].setSelectedPlantType(PlantType.BOMB_PLANT);
+            }
+            peaShooterCard.setSelected(false);
+            wallPlantCard.setSelected(false);
+            sunflowerCard.setSelected(false);
+            waterPlantCard.setSelected(false);
+            bombPlantCard.setSelected(true);
         });
     }
 
