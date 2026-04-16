@@ -37,12 +37,11 @@ public class GameApp extends Application {
         // Pages
         MenuPage menu = new MenuPage();
         SettingsPage settingsPage = new SettingsPage();
-
-
         // We keep the current GameBoard inside an array so inner lambdas can modify it.
         // This is a common trick in Java when lambdas need a mutable reference.
         final GameBoard[] boardRef = {null};
         final LevelType[] activeLevelTypeRef = {LevelType.DAY};
+        final Difficulty[] activeDifficultyRef = {Difficulty.MEDIUM};
         final Level menuLevel = Levels.create(LevelType.DAY);
         final LevelVisualTheme menuTheme = menuLevel.getVisualTheme();
         final String menuBackgroundPath = menuLevel.getBackgroundPath();
@@ -53,7 +52,7 @@ public class GameApp extends Application {
         sunStorageIcon.setFitHeight(120);
         sunStorageIcon.setPreserveRatio(true);
 
-        Label sunLabel = new Label("200");
+        Label sunLabel = new Label("" + Difficulty.MEDIUM.getSettings().getStartingSun());
         sunLabel.setStyle(menuTheme.getSunLabelStyle());
 
         HBox sunBox = new HBox(sunStorageIcon, sunLabel);
@@ -66,7 +65,7 @@ public class GameApp extends Application {
         waterStorageIcon.setFitHeight(130);
         waterStorageIcon.setPreserveRatio(true);
 
-        Label waterLabel = new Label("100");
+        Label waterLabel = new Label("" + Difficulty.MEDIUM.getSettings().getStartingWater());
         waterLabel.setStyle(menuTheme.getWaterLabelStyle());
 
         HBox waterBox = new HBox(waterStorageIcon, waterLabel);
@@ -266,7 +265,7 @@ public class GameApp extends Application {
         ImageView globalBg = new ImageView();
         configureBackground(globalBg, menuBackgroundPath, DESIGN_WIDTH, DESIGN_HEIGHT);
 
-        // contentLayer = what changes (menu, settings, game layout)
+        // contentLayer = what changes (menu, settings, or gameplay layout)
         Pane contentLayer = new Pane();
         contentLayer.setPrefSize(DESIGN_WIDTH, DESIGN_HEIGHT);
         StackPane.setAlignment(contentLayer, Pos.TOP_LEFT);
@@ -285,10 +284,12 @@ public class GameApp extends Application {
         // Show menu first
         contentLayer.getChildren().setAll(menu);
 
-        menu.getStartButton().setOnAction(e -> {
+        menu.getDayModeButton().setOnAction(e -> {
             activeLevelTypeRef[0] = LevelType.DAY;
+            activeDifficultyRef[0] = settingsPage.getSelectedDifficulty();
             launchGame(
                     activeLevelTypeRef[0],
+                    activeDifficultyRef[0],
                     boardRef,
                     globalBg,
                     contentLayer,
@@ -324,8 +325,10 @@ public class GameApp extends Application {
 
         menu.getNightModeButton().setOnAction(e -> {
             activeLevelTypeRef[0] = LevelType.NIGHT;
+            activeDifficultyRef[0] = settingsPage.getSelectedDifficulty();
             launchGame(
                     activeLevelTypeRef[0],
+                    activeDifficultyRef[0],
                     boardRef,
                     globalBg,
                     contentLayer,
@@ -357,11 +360,20 @@ public class GameApp extends Application {
                     DESIGN_WIDTH,
                     DESIGN_HEIGHT
             );
+        });
+
+        menu.getSettingsButton().setOnAction(e -> {
+            showScreen(contentLayer, globalBg, menuBackgroundPath, settingsPage);
+        });
+
+        settingsPage.getBackButton().setOnAction(e -> {
+            showScreen(contentLayer, globalBg, menuBackgroundPath, menu);
         });
 
         restartButton.setOnAction(e -> {
             launchGame(
                     activeLevelTypeRef[0],
+                    activeDifficultyRef[0],
                     boardRef,
                     globalBg,
                     contentLayer,
@@ -393,16 +405,6 @@ public class GameApp extends Application {
                     DESIGN_WIDTH,
                     DESIGN_HEIGHT
             );
-        });
-
-        // Settings page
-        menu.getSettingsButton().setOnAction(e -> {
-            showScreen(contentLayer, globalBg, menuBackgroundPath, settingsPage);
-        });
-
-        // Back from settings to menu
-        settingsPage.getBackButton().setOnAction(e -> {
-            showScreen(contentLayer, globalBg, menuBackgroundPath, menu);
         });
 
         // Quit button closes app
@@ -599,6 +601,7 @@ public class GameApp extends Application {
 
     private void launchGame(
             LevelType levelType,
+            Difficulty difficulty,
             GameBoard[] boardRef,
             ImageView globalBg,
             Pane contentLayer,
@@ -632,7 +635,7 @@ public class GameApp extends Application {
     ) {
         Level level = Levels.create(levelType);
         LevelVisualTheme visualTheme = level.getVisualTheme();
-        GameBoard board = new GameBoard(level);
+        GameBoard board = new GameBoard(level, difficulty);
         boardRef[0] = board;
 
         configureBackground(globalBg, visualTheme.getBackgroundPath(), designWidth, designHeight);
@@ -651,6 +654,8 @@ public class GameApp extends Application {
                 flag2,
                 flag3
         );
+        sunLabel.setText("" + board.getSunPoints());
+        waterLabel.setText("" + board.getWaterPoints());
         resetGameplayUi(restartButton, gameOverOverlay, pauseButton, resumeButton, mainMenuButton, winOverlay);
         resetPlantSelection(board, peaShooterCard, wallPlantCard, sunflowerCard, waterPlantCard, bombPlantCard, cageCard);
         setupPlantButtons(boardRef, peaShooterCard, wallPlantCard, sunflowerCard, waterPlantCard, bombPlantCard, cageCard);

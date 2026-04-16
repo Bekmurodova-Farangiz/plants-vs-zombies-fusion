@@ -26,14 +26,16 @@ public class GameBoard extends Pane {
     private static final int CAGE_SUN_COST = 50;
     private static final int CAGE_WATER_COST = 50;
     private final Level level;
+    private final Difficulty difficulty;
+    private final DifficultySettings difficultySettings;
     private List<Plant> plants = new ArrayList<>();    //plants stores all plant objects on the board
     private List<Zombie> zombies = new ArrayList<>(); //zombies stores all zombie objects on the board
     private List<Bullet> bullets = new ArrayList<>();  //bullets added to the storage
     private ArrayList<Sun> suns = new ArrayList<>();
     private ArrayList<WaterDrop> waterDrops = new ArrayList<>();
     private GameState gameState = GameState.RUNNING;
-    private int sunPoints = 250; //Player's starting points
-    private int waterPoints = 100;
+    private int sunPoints;
+    private int waterPoints;
     private Timeline zombieSpawner;
     private Timeline waveStartDelayTimeline;
     private Timeline sunGenerator;
@@ -55,11 +57,19 @@ public class GameBoard extends Pane {
     
     //Constructor
     public GameBoard() {
-        this(Levels.create(LevelType.DAY));
+        this(Levels.create(LevelType.DAY), Difficulty.MEDIUM);
     }
 
     public GameBoard(Level level) {
+        this(level, Difficulty.MEDIUM);
+    }
+
+    public GameBoard(Level level, Difficulty difficulty) {
         this.level = level;
+        this.difficulty = difficulty != null ? difficulty : Difficulty.MEDIUM;
+        this.difficultySettings = this.difficulty.getSettings();
+        sunPoints = difficultySettings.getStartingSun();
+        waterPoints = difficultySettings.getStartingWater();
         setPrefSize(COLUMNS * CELL_WIDTH, ROWS * CELL_HEIGHT);
         setPickOnBounds(false);
         initializeCells();
@@ -129,7 +139,7 @@ public class GameBoard extends Pane {
     }
     private void configureWave(Wave wave) {
         zombiesPerWave = wave.getTotalZombies();
-        spawnIntervalSeconds = wave.getSpawnInterval();
+        spawnIntervalSeconds = wave.getSpawnInterval() * difficultySettings.getSpawnIntervalMultiplier();
     }
     private void spawnZombie(Wave wave) {
         if (isMatchEnded()) {
@@ -139,12 +149,19 @@ public class GameBoard extends Pane {
         ZombieSpawnLocation spawnLocation = chooseZombieSpawnLocation();
         ZombieType zombieType = wave.pickZombieType();
         Zombie zombie = ZombieFactory.createZombie(zombieType, spawnLocation.getRow());
+        applyDifficultySettings(zombie);
 
         positionZombie(zombie, spawnLocation);
         configureZombieInteractions(zombie);
         zombies.add(zombie);
         getChildren().add(zombie.getView());
         startGameLoop(zombie);
+    }
+    private void applyDifficultySettings(Zombie zombie) {
+        zombie.applyStatMultipliers(
+                difficultySettings.getZombieHealthMultiplier(),
+                difficultySettings.getZombieSpeedMultiplier()
+        );
     }
     private void spawnNextZombieInWave() {
         if (isMatchEnded()) {
@@ -462,6 +479,10 @@ public class GameBoard extends Pane {
 
     public Level getLevel() {
         return level;
+    }
+
+    public Difficulty getDifficulty() {
+        return difficulty;
     }
 
     public List<Grave> getGraves() {

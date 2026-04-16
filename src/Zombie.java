@@ -145,6 +145,11 @@ public class Zombie {
         this.attackDamage = attackDamage;
     }
 
+    public void applyStatMultipliers(double healthMultiplier, double speedMultiplier) {
+        health = Math.max(1, (int) Math.round(health * healthMultiplier));
+        speed = Math.max(0.1, speed * speedMultiplier);
+    }
+
     public void trapForSeconds(double seconds) {
         long durationMillis = Math.max(0L, (long) (seconds * 1000));
         long now = System.currentTimeMillis();

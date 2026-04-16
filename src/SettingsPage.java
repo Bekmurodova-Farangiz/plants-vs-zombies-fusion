@@ -1,46 +1,51 @@
 import javafx.geometry.Pos;
 import javafx.scene.control.Button;
+import javafx.scene.control.ComboBox;
 import javafx.scene.control.Label;
 import javafx.scene.layout.VBox;
 
 public class SettingsPage extends VBox {
 
-    private Button easyButton;
-    private Button mediumButton;
-    private Button hardButton;
-    private Button backButton;
+    private static final double CONTROL_WIDTH = 220;
+
+    private final ComboBox<Difficulty> difficultySelector;
+    private final Button backButton;
 
     public SettingsPage() {
+        Label titleLabel = new Label("Settings");
+        titleLabel.setStyle("-fx-font-size: 32px; -fx-text-fill: white;");
 
-        Label title = new Label("Settings");
-        title.setStyle("-fx-font-size: 30px;");
+        Label difficultyLabel = new Label("Difficulty");
+        difficultyLabel.setStyle("-fx-font-size: 22px; -fx-text-fill: white;");
 
-        easyButton = new Button("Easy");
-        mediumButton = new Button("Medium");
-        hardButton = new Button("Hard");
+        difficultySelector = new ComboBox<>();
+        difficultySelector.getItems().addAll(Difficulty.values());
+        difficultySelector.getSelectionModel().select(Difficulty.MEDIUM);
+        difficultySelector.setPrefWidth(CONTROL_WIDTH);
+        difficultySelector.setMaxWidth(CONTROL_WIDTH);
+        difficultySelector.setStyle("-fx-font-size: 18px;");
+        difficultySelector.setFocusTraversable(false);
+
         backButton = new Button("Back");
+        backButton.setStyle("-fx-font-size: 20px;");
+        backButton.setPrefWidth(CONTROL_WIDTH);
+        backButton.setFocusTraversable(false);
 
-        easyButton.setStyle("-fx-font-size: 18px;");
-        mediumButton.setStyle("-fx-font-size: 18px;");
-        hardButton.setStyle("-fx-font-size: 18px;");
-        backButton.setStyle("-fx-font-size: 18px;");
+        VBox difficultyBox = new VBox(difficultyLabel, difficultySelector);
+        difficultyBox.setAlignment(Pos.CENTER);
+        difficultyBox.setSpacing(8);
 
         setAlignment(Pos.CENTER);
-        setSpacing(15);
+        setSpacing(20);
+        setPrefSize(1600, 900);
+        setMaxSize(1600, 900);
 
-        getChildren().addAll(title, easyButton, mediumButton, hardButton, backButton);
+        getChildren().addAll(titleLabel, difficultyBox, backButton);
     }
 
-    public Button getEasyButton() {
-        return easyButton;
-    }
-
-    public Button getMediumButton() {
-        return mediumButton;
-    }
-
-    public Button getHardButton() {
-        return hardButton;
+    public Difficulty getSelectedDifficulty() {
+        Difficulty selectedDifficulty = difficultySelector.getValue();
+        return selectedDifficulty != null ? selectedDifficulty : Difficulty.MEDIUM;
     }
 
     public Button getBackButton() {
