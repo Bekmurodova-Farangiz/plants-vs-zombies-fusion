@@ -36,6 +36,6 @@ public class Bullet {
     }
 
     public boolean isOffScreen() {
-        return view.getTranslateX() > 1510;
+        return view.getTranslateX() > 1462;
     }
 }
