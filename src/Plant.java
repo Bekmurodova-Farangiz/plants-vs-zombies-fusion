@@ -110,6 +110,9 @@ public class Plant {
     }
     public void onGameResumed(GameBoard board) {
     }
+    public void onGameEnded() {
+        stopShooting();
+    }
     public void setShootingTimeline(Timeline shootingTimeline) {
         this.shootingTimeline = shootingTimeline;
     }

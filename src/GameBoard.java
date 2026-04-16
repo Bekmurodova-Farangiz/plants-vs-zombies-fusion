@@ -105,6 +105,10 @@ public class GameBoard extends Pane {
         spawnIntervalSeconds = wave.getSpawnInterval();
     }
     private void spawnZombie(Wave wave) {
+        if (isMatchEnded()) {
+            return;
+        }
+
         int row = ThreadLocalRandom.current().nextInt(ROWS);
         ZombieType zombieType = wave.pickZombieType();
         Zombie zombie = ZombieFactory.createZombie(zombieType, row);
@@ -125,6 +129,10 @@ public class GameBoard extends Pane {
         startGameLoop(zombie);
     }
     private void spawnNextZombieInWave() {
+        if (isMatchEnded()) {
+            return;
+        }
+
         if (zombiesSpawnedInWave >= zombiesPerWave) {
             finishWaveSpawning();
             return;
@@ -151,7 +159,7 @@ public class GameBoard extends Pane {
     public void startGameLoop(Zombie zombie) {
         Timeline timeline = new Timeline(
             new KeyFrame(Duration.millis(50), e -> {
-                if (gameOver) { //Guard clause
+                if (isMatchEnded()) {
                     zombie.stopAllActions();
                     return;
                 }
@@ -200,6 +208,10 @@ public class GameBoard extends Pane {
         return false;
     }
     public void fireBulletFromPlant(Plant plant) {
+        if (isMatchEnded()) {
+            return;
+        }
+
         double bulletX = plant.getShootOriginX() - (Bullet.WIDTH / 2.0);
         double bulletY = plant.getShootOriginY() - (Bullet.HEIGHT / 2.0);
 
@@ -210,6 +222,10 @@ public class GameBoard extends Pane {
         getChildren().add(bullet.getView());
     }
     public void shootFromPlant(Plant plant) {
+        if (isMatchEnded()) {
+            return;
+        }
+
         if (plant instanceof PeaShooter) {
             ((PeaShooter) plant).playShootAnimation(this);
             return;
@@ -220,12 +236,12 @@ public class GameBoard extends Pane {
     }
     // auto shooting system 
     public void startShooting(Plant plant) {
-        if (plant.getShootingInterval() <= 0) {
+        if (plant.getShootingInterval() <= 0 || isMatchEnded()) {
             return;
         }
         Timeline shooter = new Timeline(
             new KeyFrame(Duration.seconds(plant.getShootingInterval()), e -> {
-                if (plant.isDead() || !plants.contains(plant)) {
+                if (isMatchEnded() || plant.isDead() || !plants.contains(plant)) {
                     return;
                 }
 
@@ -315,7 +331,7 @@ public class GameBoard extends Pane {
     }
 
     private void beginCurrentWave() {
-        if (paused || gameOver || gameWon) {
+        if (paused || isMatchEnded()) {
             return;
         }
 
@@ -347,7 +363,7 @@ public class GameBoard extends Pane {
 
         zombieSpawner = new Timeline(
             new KeyFrame(Duration.seconds(spawnIntervalSeconds), e -> {
-                if (paused || gameOver) {
+                if (paused || isMatchEnded()) {
                     return;
                 }
                 if (!waveInProgress) {
@@ -372,22 +388,22 @@ public class GameBoard extends Pane {
     }
     public void checkGameOver(Zombie zombie) {
         if (zombie.getView().getTranslateX() <= 0) {
-            gameOver = true;
-            zombie.stopAllActions();
-            if (zombieSpawner != null) {
-                zombieSpawner.stop();
-            }
-            stopWaveStartDelay();
-            if (sunGenerator != null) {
-                sunGenerator.stop();
-            }
+            endGameAsLost();
             System.out.println("GAME OVER! A zombie reached the house.");
         }
     }
 
     public void startSunGenerator() {
+        if (isMatchEnded()) {
+            return;
+        }
+
         sunGenerator = new Timeline(
             new KeyFrame(Duration.seconds(5), e -> {
+                if (isMatchEnded()) {
+                    return;
+                }
+
                 sunPoints += 25;
                 System.out.println("Sun points: " + sunPoints);
             })
@@ -425,6 +441,10 @@ public class GameBoard extends Pane {
         return isOnCooldown(PlantType.fromIdentifier(plantType));
     }
     public void addSunPoints(int amount) {
+        if (isMatchEnded()) {
+            return;
+        }
+
         sunPoints += amount;
         System.out.println("Sun points: " + sunPoints);
     }
@@ -432,6 +452,10 @@ public class GameBoard extends Pane {
         spawnSunFromPlant(plant, 25);
     }
     public void spawnSunFromPlant(Plant plant, int amount) {
+        if (isMatchEnded()) {
+            return;
+        }
+
         double x = plant.getCenterX();
         double y = plant.getCenterY();
 
@@ -448,10 +472,18 @@ public class GameBoard extends Pane {
         return waterPoints;
     }
     public void addWaterPoints(int amount) {
+        if (isMatchEnded()) {
+            return;
+        }
+
         waterPoints += amount;
         System.out.println("Water points: " + waterPoints);
     }
     public void spawnWaterDropFromPlant(Plant plant) {
+        if (isMatchEnded()) {
+            return;
+        }
+
         double x = plant.getCenterX();
         double y = plant.getCenterY();
 
@@ -459,6 +491,10 @@ public class GameBoard extends Pane {
 
         // click behavior
         drop.getView().setOnMouseClicked(e -> {
+            if (isMatchEnded()) {
+                return;
+            }
+
             if (!drop.isCollected()) {
                 drop.collect();
                 addWaterPoints(drop.getValue());
@@ -484,17 +520,7 @@ public class GameBoard extends Pane {
     }
     public void startNextWave() {
         if (currentWave >= totalWaves) {
-            gameWon = true;
-
-            if (zombieSpawner != null) {
-                zombieSpawner.stop();
-            }
-            stopWaveStartDelay();
-
-            if (globalLoop != null) {
-                globalLoop.stop();
-            }
-
+            endGameAsWon();
             System.out.println("All waves completed! YOU WON!");
             return;
         }
@@ -524,7 +550,7 @@ public class GameBoard extends Pane {
         globalLoop = new Timeline(
             new KeyFrame(Duration.millis(50), e -> {
 
-                if (paused || gameOver) {
+                if (paused || isMatchEnded()) {
                     return;
                 }
 
@@ -583,6 +609,10 @@ public class GameBoard extends Pane {
         this.paused = paused;
     }
     public void pauseGame() {
+        if (isMatchEnded()) {
+            return;
+        }
+
         paused = true;
 
         if (globalLoop != null) {
@@ -607,6 +637,10 @@ public class GameBoard extends Pane {
     }
 
     public void resumeGame() {
+        if (isMatchEnded()) {
+            return;
+        }
+
         paused = false;
 
         if (globalLoop != null) {
@@ -634,13 +668,18 @@ public class GameBoard extends Pane {
     }
 
     public void setGameWon(boolean gameWon){
-        this.gameWon = gameWon;
+        if (gameWon) {
+            endGameAsWon();
+            return;
+        }
+
+        this.gameWon = false;
     }
     public void setPlantRemovedHandler(Consumer<Plant> plantRemovedHandler) {
         this.plantRemovedHandler = plantRemovedHandler;
     }
     public Plant placePlantAt(int row, int col) {
-        if (paused || gameOver) {
+        if (paused || isMatchEnded()) {
             return null;
         }
 
@@ -755,6 +794,57 @@ public class GameBoard extends Pane {
 
         if (plantRemovedHandler != null) {
             plantRemovedHandler.accept(plant);
+        }
+    }
+
+    private void endGameAsLost() {
+        if (isMatchEnded()) {
+            return;
+        }
+
+        gameOver = true;
+        stopAllGameplay();
+    }
+
+    private void endGameAsWon() {
+        if (isMatchEnded()) {
+            return;
+        }
+
+        gameWon = true;
+        stopAllGameplay();
+    }
+
+    private void stopAllGameplay() {
+        paused = false;
+        waveInProgress = false;
+
+        stopTimeline(globalLoop);
+        stopTimeline(zombieSpawner);
+        stopWaveStartDelay();
+        stopTimeline(sunGenerator);
+
+        for (Plant plant : plants) {
+            plant.onGameEnded();
+        }
+
+        for (Zombie zombie : zombies) {
+            zombie.stopAllActions();
+        }
+
+        for (WaterDrop drop : waterDrops) {
+            drop.getView().setOnMouseClicked(null);
+            drop.getView().setMouseTransparent(true);
+        }
+    }
+
+    private boolean isMatchEnded() {
+        return gameOver || gameWon;
+    }
+
+    private void stopTimeline(Timeline timeline) {
+        if (timeline != null) {
+            timeline.stop();
         }
     }
 }

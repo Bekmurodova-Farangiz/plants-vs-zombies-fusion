@@ -72,9 +72,39 @@ public class GameApp extends Application {
         flagBar.setSpacing(55);
         flagBar.setAlignment(Pos.CENTER_LEFT);
 
-        // Game-over text
-        Label gameOverLabel = new Label("");
-        gameOverLabel.setStyle("-fx-font-size: 30px; -fx-text-fill: red;");
+        ImageView gameOverImage = new ImageView(ImageAssets.load("file:src/assets/Gameover.png"));
+        gameOverImage.setFitWidth(620);
+        gameOverImage.setPreserveRatio(true);
+
+        Button restartButton = new Button("Restart");
+        restartButton.setStyle(
+                "-fx-font-size: 28px;" +
+                "-fx-font-weight: bold;" +
+                "-fx-background-color: #f2d25c;" +
+                "-fx-text-fill: #1f1605;" +
+                "-fx-background-radius: 18;" +
+                "-fx-padding: 14 40 14 40;"
+        );
+
+        Button gameOverMenuButton = new Button("Menu");
+        gameOverMenuButton.setStyle(
+                "-fx-font-size: 22px;" +
+                "-fx-font-weight: bold;" +
+                "-fx-background-color: rgba(255,255,255,0.92);" +
+                "-fx-text-fill: #1d1d1d;" +
+                "-fx-background-radius: 18;" +
+                "-fx-padding: 12 34 12 34;"
+        );
+
+        VBox gameOverOverlay = new VBox(gameOverImage, restartButton, gameOverMenuButton);
+        gameOverOverlay.setAlignment(Pos.CENTER);
+        gameOverOverlay.setSpacing(24);
+        gameOverOverlay.setPrefSize(DESIGN_WIDTH, DESIGN_HEIGHT);
+        gameOverOverlay.setStyle("-fx-background-color: transparent;");
+        gameOverOverlay.setVisible(false);
+        gameOverOverlay.setMouseTransparent(true);
+        //shifts everything upward visually
+        gameOverOverlay.setTranslateY(-190);
 
         Label winLabel = new Label("YOU WON THE GAME!");
         winLabel.setStyle("-fx-font-size: 42px; -fx-text-fill: gold; -fx-font-weight: bold;");
@@ -96,11 +126,6 @@ public class GameApp extends Application {
         winOverlay.setSpacing(18);
         winOverlay.setAlignment(Pos.CENTER);
         winOverlay.setVisible(false);
-
-        // Restart button
-        Button restartButton = new Button("Restart");
-        restartButton.setStyle("-fx-font-size: 16px;");
-        restartButton.setVisible(false);
 
         ImageView pauseIcon = new ImageView(ImageAssets.load("file:src/assets/pause_icon.png"));
         pauseIcon.setFitWidth(100);
@@ -131,6 +156,7 @@ public class GameApp extends Application {
         resumeButton.setFocusTraversable(false);
         mainMenuButton.setFocusTraversable(false);
         restartButton.setFocusTraversable(false);
+        gameOverMenuButton.setFocusTraversable(false);
 
         PlantCard peaShooterCard = new PlantCard(
                 PlantType.PEA_SHOOTER.getIdentifier(),
@@ -170,7 +196,7 @@ public class GameApp extends Application {
         VBox waveBox = new VBox(waveProgressBar, flagBar);
         waveBox.setSpacing(4);
         waveBox.setStyle("-fx-background-color: rgba(0,0,0,0.35); -fx-padding: 10; -fx-background-radius: 12;");
-        waveBox.setPrefWidth(220);
+        waveBox.setPrefWidth(240);
 
         Pane spacer = new Pane();
         HBox.setHgrow(spacer, javafx.scene.layout.Priority.ALWAYS);
@@ -247,8 +273,13 @@ public class GameApp extends Application {
             boardRef[0] = board;
 
             // Reset UI state for a new game
-            gameOverLabel.setText("");
-            restartButton.setVisible(false);
+            restartButton.setVisible(true);
+            gameOverOverlay.setVisible(false);
+            gameOverOverlay.setMouseTransparent(true);
+            pauseButton.setVisible(true);
+            resumeButton.setVisible(false);
+            mainMenuButton.setVisible(true);
+            winOverlay.setVisible(false);
 
             // Default selected plant when game starts
             board.setSelectedPlantType(PlantType.PEA_SHOOTER);
@@ -265,8 +296,13 @@ public class GameApp extends Application {
                 GameBoard newBoard = new GameBoard();
                 boardRef[0] = newBoard;
 
-                gameOverLabel.setText("");
-                restartButton.setVisible(false);
+                restartButton.setVisible(true);
+                gameOverOverlay.setVisible(false);
+                gameOverOverlay.setMouseTransparent(true);
+                pauseButton.setVisible(true);
+                resumeButton.setVisible(false);
+                mainMenuButton.setVisible(true);
+                winOverlay.setVisible(false);
 
                 newBoard.setSelectedPlantType(PlantType.PEA_SHOOTER);
                 peaShooterCard.setSelected(true);
@@ -282,8 +318,7 @@ public class GameApp extends Application {
                         newBoard,
                         topBar,
                         waveBox,
-                        gameOverLabel,
-                        restartButton,
+                        gameOverOverlay,
                         pauseButton,
                         resumeButton,
                         mainMenuButton,
@@ -299,8 +334,7 @@ public class GameApp extends Application {
                     board,
                     topBar,
                     waveBox,
-                    gameOverLabel,
-                    restartButton,
+                    gameOverOverlay,
                     pauseButton,
                     resumeButton,
                     mainMenuButton,
@@ -347,8 +381,14 @@ public class GameApp extends Application {
                     waveProgressBar.setProgress(boardRef[0].getWaveProgress());
 
                     if (boardRef[0].isGameOver()) {
-                        gameOverLabel.setText("GAME OVER");
-                        restartButton.setVisible(true);
+                        gameOverOverlay.setVisible(true);
+                        gameOverOverlay.setMouseTransparent(false);
+                        pauseButton.setVisible(false);
+                        resumeButton.setVisible(false);
+                        mainMenuButton.setVisible(false);
+                    } else {
+                        gameOverOverlay.setVisible(false);
+                        gameOverOverlay.setMouseTransparent(true);
                     }
 
                     if (boardRef[0].isGameWon()) {
@@ -357,14 +397,18 @@ public class GameApp extends Application {
                         winRestartButton.setVisible(true);
                         winMenuButton.setVisible(true);
 
-                        restartButton.setVisible(false);
                         pauseButton.setVisible(false);
                         resumeButton.setVisible(false);
+                        mainMenuButton.setVisible(false);
                     } else {
                         winOverlay.setVisible(false);
                         winLabel.setVisible(false);
                         winRestartButton.setVisible(false);
                         winMenuButton.setVisible(false);
+
+                        if (!gameOverOverlay.isVisible()) {
+                            mainMenuButton.setVisible(true);
+                        }
                     }
                 }
                 pauseButton.setOnAction(e -> {
@@ -390,8 +434,9 @@ public class GameApp extends Application {
 
                     pauseButton.setVisible(true);
                     resumeButton.setVisible(false);
-                    restartButton.setVisible(false);
-                    gameOverLabel.setText("");
+                    mainMenuButton.setVisible(true);
+                    gameOverOverlay.setVisible(false);
+                    gameOverOverlay.setMouseTransparent(true);
 
                     contentLayer.getChildren().setAll(menu);
                 });
@@ -408,15 +453,31 @@ public class GameApp extends Application {
 
                     pauseButton.setVisible(true);
                     resumeButton.setVisible(false);
-                    restartButton.setVisible(false);
-                    gameOverLabel.setText("");
+                    mainMenuButton.setVisible(true);
                     winOverlay.setVisible(false);
+                    gameOverOverlay.setVisible(false);
+                    gameOverOverlay.setMouseTransparent(true);
 
                     contentLayer.getChildren().setAll(menu);
                 });
             }
         };
         timer.start();
+
+        gameOverMenuButton.setOnAction(e -> {
+            if (boardRef[0] != null) {
+                boardRef[0].setPaused(false);
+                boardRef[0] = null;
+            }
+
+            pauseButton.setVisible(true);
+            resumeButton.setVisible(false);
+            mainMenuButton.setVisible(true);
+            gameOverOverlay.setVisible(false);
+            gameOverOverlay.setMouseTransparent(true);
+
+            contentLayer.getChildren().setAll(menu);
+        });
 
         // Window size
         Scene scene = new Scene(root, 1400, 900);
@@ -443,14 +504,13 @@ public class GameApp extends Application {
 
     /**
      * Builds the visible gameplay layout:
-     * top bar + battlefield pane + game over label + restart button
+     * top bar + battlefield pane + overlays
      */
     private VBox buildGameLayout(
             GameBoard board,
             HBox topBar,
             VBox waveBox,
-            Label gameOverLabel,
-            Button restartButton,
+            VBox gameOverOverlay,
             Button pauseButton,
             Button resumeButton,
             Button mainMenuButton,
@@ -478,19 +538,16 @@ public class GameApp extends Application {
         board.setLayoutY(-15);
         board.setPickOnBounds(false);
 
-        battlefieldPane.getChildren().addAll(boardView, board, waveBox, winOverlay);
+        battlefieldPane.getChildren().addAll(boardView, board, waveBox, winOverlay, gameOverOverlay);
 
         waveBox.setLayoutX(1200);
-        waveBox.setLayoutY(670);
+        waveBox.setLayoutY(640);
 
         winOverlay.setLayoutX(600);
         winOverlay.setLayoutY(220);
+        gameOverOverlay.relocate(0, 0);
 
-        HBox controlBar = new HBox(restartButton);
-        controlBar.setSpacing(10);
-        controlBar.setAlignment(Pos.CENTER_LEFT);
-
-        VBox layout = new VBox(topBar, battlefieldPane, gameOverLabel, controlBar);
+        VBox layout = new VBox(topBar, battlefieldPane);
         layout.setSpacing(10);
         layout.setAlignment(Pos.TOP_LEFT);
         layout.setPadding(new Insets(0, 0, 0, 0));

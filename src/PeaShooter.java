@@ -75,6 +75,13 @@ public class PeaShooter extends Plant {
         }
     }
 
+    @Override
+    public void onGameEnded() {
+        super.onGameEnded();
+        stopAnimation();
+        resetToIdleFrame();
+    }
+
     private void resetToIdleFrame() {
         applyFrame(IDLE_FRAME_INDEX);
     }

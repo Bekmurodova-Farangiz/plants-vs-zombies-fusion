@@ -122,6 +122,16 @@ public class BombPlant extends Plant {
         }
     }
 
+    @Override
+    public void onGameEnded() {
+        super.onGameEnded();
+        stopTimeline(fuseTimeline);
+        stopTimeline(explosionTimeline);
+        fuseTimeline = null;
+        explosionTimeline = null;
+        board = null;
+    }
+
     private void startFuse() {
         if (detonated || fuseTimeline != null) {
             return;

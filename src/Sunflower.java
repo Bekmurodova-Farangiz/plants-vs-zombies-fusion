@@ -119,6 +119,16 @@ public class Sunflower extends Plant {
     }
 
     @Override
+    public void onGameEnded() {
+        super.onGameEnded();
+        stopTimeline(productionTimeline);
+        stopTimeline(animationTimeline);
+        productionTimeline = null;
+        animationTimeline = null;
+        board = null;
+    }
+
+    @Override
     public void onRemoved() {
         stopTimeline(productionTimeline);
         stopTimeline(animationTimeline);

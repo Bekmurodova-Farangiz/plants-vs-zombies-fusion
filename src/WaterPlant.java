@@ -63,6 +63,16 @@ public class WaterPlant extends Plant {
     }
 
     @Override
+    public void onGameEnded() {
+        super.onGameEnded();
+        stopTimeline(waterTimeline);
+        stopTimeline(animationTimeline);
+        waterTimeline = null;
+        animationTimeline = null;
+        board = null;
+    }
+
+    @Override
     public void onRemoved() {
         stopTimeline(waterTimeline);
         stopTimeline(animationTimeline);
