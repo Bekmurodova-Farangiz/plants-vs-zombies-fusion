@@ -6,6 +6,7 @@ import javafx.scene.layout.VBox;
 public class MenuPage extends VBox {
 
     private Button startButton;
+    private Button nightModeButton;
     private Button settingsButton;
     private Button quitButton;
 
@@ -13,11 +14,13 @@ public class MenuPage extends VBox {
         Label titleLabel = new Label("Plantz Vs Zombiie Fusion");
         titleLabel.setStyle("-fx-font-size: 36px; -fx-text-fill: white;");
 
-        startButton = new Button("Start");
+        startButton = new Button("Start Day");
+        nightModeButton = new Button("Night Mode");
         settingsButton = new Button("Settings");
         quitButton = new Button("Quit");
 
         startButton.setStyle("-fx-font-size: 20px;");
+        nightModeButton.setStyle("-fx-font-size: 20px;");
         settingsButton.setStyle("-fx-font-size: 20px;");
         quitButton.setStyle("-fx-font-size: 20px;");
 
@@ -26,7 +29,7 @@ public class MenuPage extends VBox {
         setPrefSize(1600, 900);
         setMaxSize(1600, 900); // giving it the full game-surface size
 
-        getChildren().addAll(titleLabel, startButton, settingsButton, quitButton);
+        getChildren().addAll(titleLabel, startButton, nightModeButton, settingsButton, quitButton);
     }
 
     public Button getStartButton() {
@@ -35,6 +38,10 @@ public class MenuPage extends VBox {
 
     public Button getSettingsButton() {
         return settingsButton;
+    }
+
+    public Button getNightModeButton() {
+        return nightModeButton;
     }
 
     public Button getQuitButton() {

@@ -5,6 +5,7 @@ import javafx.animation.Timeline;
 import javafx.util.Duration;
 // list of plants to GameBoard.
 import java.util.ArrayList;
+import java.util.Collections;
 import java.util.EnumMap;
 import java.util.Iterator;
 import java.util.List;
@@ -20,6 +21,7 @@ public class GameBoard extends Pane {
     private static final int CELL_HEIGHT = BoardMetrics.CELL_HEIGHT;
     private static final double INITIAL_PREPARATION_SECONDS = 12.0;
     private static final double BETWEEN_WAVES_BREAK_SECONDS = 5.0;
+    private final Level level;
     private List<Plant> plants = new ArrayList<>();    //plants stores all plant objects on the board
     private List<Zombie> zombies = new ArrayList<>(); //zombies stores all zombie objects on the board
     private List<Bullet> bullets = new ArrayList<>();  //bullets added to the storage
@@ -42,13 +44,21 @@ public class GameBoard extends Pane {
     private double spawnIntervalSeconds = 3.5;
     private List<Wave> waves = new ArrayList<>();
     private BoardCell[][] cells = new BoardCell[ROWS][COLUMNS];
+    private final List<Grave> graves = new ArrayList<>();
     private Consumer<Plant> plantRemovedHandler;
     
     //Constructor
     public GameBoard() {
+        this(Levels.create(LevelType.DAY));
+    }
+
+    public GameBoard(Level level) {
+        this.level = level;
         setPrefSize(COLUMNS * CELL_WIDTH, ROWS * CELL_HEIGHT);
         setPickOnBounds(false);
         initializeCells();
+        initializeMatchGraves();
+        applyLevelLayout();
         initializeWaves();
         totalWaves = waves.size();
         configureWave(waves.get(0));
@@ -61,6 +71,17 @@ public class GameBoard extends Pane {
                 cells[row][col] = new BoardCell(row, col);
             }
         }
+    }
+
+    private void applyLevelLayout() {
+        for (Grave grave : graves) {
+            cells[grave.getRow()][grave.getCol()].setGrave(grave);
+        }
+    }
+
+    private void initializeMatchGraves() {
+        graves.clear();
+        graves.addAll(level.generateGravesForMatch());
     }
     private void initializeWaves() {
 
@@ -107,22 +128,12 @@ public class GameBoard extends Pane {
             return;
         }
 
-        int row = ThreadLocalRandom.current().nextInt(ROWS);
+        ZombieSpawnLocation spawnLocation = chooseZombieSpawnLocation();
         ZombieType zombieType = wave.pickZombieType();
-        Zombie zombie = ZombieFactory.createZombie(zombieType, row);
+        Zombie zombie = ZombieFactory.createZombie(zombieType, spawnLocation.getRow());
 
+        positionZombie(zombie, spawnLocation);
         zombies.add(zombie);
-
-        double zombieWidth = zombie.getView().getBoundsInLocal().getWidth();
-        // double zombieHeight = zombie.getView().getBoundsInLocal().getHeight();
-
-        double x = (COLUMNS * CELL_WIDTH) - zombieWidth;
-        double y = (row * CELL_HEIGHT) + 10;
-
-        zombie.getView().setTranslateX(x);
-        zombie.getView().setTranslateY(y);
-        zombie.getView().setMouseTransparent(true);
-
         getChildren().add(zombie.getView());
         startGameLoop(zombie);
     }
@@ -414,8 +425,24 @@ public class GameBoard extends Pane {
         return sunPoints;
     }
 
+    public Level getLevel() {
+        return level;
+    }
+
+    public List<Grave> getGraves() {
+        return Collections.unmodifiableList(graves);
+    }
+
     public GameState getGameState() {
         return gameState;
+    }
+
+    public boolean hasGraveAt(int row, int col) {
+        return cells[row][col].hasGrave();
+    }
+
+    public Grave getGraveAt(int row, int col) {
+        return cells[row][col].getGrave();
     }
 
     public boolean isGameOver() {
@@ -679,6 +706,11 @@ public class GameBoard extends Pane {
 
         BoardCell cell = cells[row][col];
 
+        if (cell.hasGrave()) {
+            System.out.println("Cannot place a plant on a grave.");
+            return null;
+        }
+
         if (cell.isOccupied()) {
             return tryFusePlant(cell);
         }
@@ -842,6 +874,103 @@ public class GameBoard extends Pane {
     private void stopTimeline(Timeline timeline) {
         if (timeline != null) {
             timeline.stop();
+        }
+    }
+
+    private ZombieSpawnLocation chooseZombieSpawnLocation() {
+        if (shouldSpawnFromGrave()) {
+            return createGraveSpawnLocation();
+        }
+
+        return createEdgeSpawnLocation();
+    }
+
+    private boolean shouldSpawnFromGrave() {
+        double spawnChance = level.getGraveZombieSpawnChance(currentWave);
+
+        if (spawnChance <= 0.0) {
+            return false;
+        }
+
+        for (Grave grave : graves) {
+            if (grave.isSpawnSource()) {
+                return ThreadLocalRandom.current().nextDouble() < spawnChance;
+            }
+        }
+
+        return false;
+    }
+
+    private ZombieSpawnLocation createEdgeSpawnLocation() {
+        int row = ThreadLocalRandom.current().nextInt(ROWS);
+        return ZombieSpawnLocation.forEdge(row);
+    }
+
+    private ZombieSpawnLocation createGraveSpawnLocation() {
+        List<Grave> spawnableGraves = new ArrayList<>();
+
+        for (Grave grave : graves) {
+            if (grave.isSpawnSource()) {
+                spawnableGraves.add(grave);
+            }
+        }
+
+        if (spawnableGraves.isEmpty()) {
+            return createEdgeSpawnLocation();
+        }
+
+        Grave grave = spawnableGraves.get(ThreadLocalRandom.current().nextInt(spawnableGraves.size()));
+        return ZombieSpawnLocation.forGrave(grave.getRow(), grave.getCol());
+    }
+
+    private void positionZombie(Zombie zombie, ZombieSpawnLocation spawnLocation) {
+        double zombieWidth = zombie.getView().getBoundsInLocal().getWidth();
+        double x;
+
+        if (spawnLocation.isFromGrave()) {
+            double cellCenterX = (spawnLocation.getColumn() * CELL_WIDTH) + (CELL_WIDTH / 2.0);
+            x = cellCenterX - (zombieWidth / 2.0);
+        } else {
+            x = (COLUMNS * CELL_WIDTH) - zombieWidth;
+        }
+
+        double y = (spawnLocation.getRow() * CELL_HEIGHT) + 10;
+
+        zombie.getView().setTranslateX(x);
+        zombie.getView().setTranslateY(y);
+        zombie.getView().setMouseTransparent(true);
+    }
+
+    private static final class ZombieSpawnLocation {
+
+        private final int row;
+        private final int column;
+        private final boolean fromGrave;
+
+        private ZombieSpawnLocation(int row, int column, boolean fromGrave) {
+            this.row = row;
+            this.column = column;
+            this.fromGrave = fromGrave;
+        }
+
+        private static ZombieSpawnLocation forEdge(int row) {
+            return new ZombieSpawnLocation(row, COLUMNS - 1, false);
+        }
+
+        private static ZombieSpawnLocation forGrave(int row, int column) {
+            return new ZombieSpawnLocation(row, column, true);
+        }
+
+        private int getRow() {
+            return row;
+        }
+
+        private int getColumn() {
+            return column;
+        }
+
+        private boolean isFromGrave() {
+            return fromGrave;
         }
     }
 }

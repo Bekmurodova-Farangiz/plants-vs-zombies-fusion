@@ -4,15 +4,21 @@ import javafx.geometry.Insets;
 import javafx.geometry.Pos;
 import javafx.scene.Group;
 import javafx.scene.Scene;
+import javafx.scene.Node;
 import javafx.scene.control.Button;
 import javafx.scene.control.Label;
+import javafx.scene.control.ProgressBar;
+import javafx.scene.effect.DropShadow;
+import javafx.scene.effect.GaussianBlur;
 import javafx.scene.image.ImageView;
 import javafx.scene.layout.HBox;
 import javafx.scene.layout.Pane;
 import javafx.scene.layout.StackPane;
 import javafx.scene.layout.VBox;
+import javafx.scene.paint.Color;
+import javafx.scene.shape.Ellipse;
+import javafx.scene.shape.Rectangle;
 import javafx.stage.Stage;
-import javafx.scene.control.ProgressBar;
 
 public class GameApp extends Application {
 
@@ -31,6 +37,10 @@ public class GameApp extends Application {
         // We keep the current GameBoard inside an array so inner lambdas can modify it.
         // This is a common trick in Java when lambdas need a mutable reference.
         final GameBoard[] boardRef = {null};
+        final LevelType[] activeLevelTypeRef = {LevelType.DAY};
+        final Level menuLevel = Levels.create(LevelType.DAY);
+        final LevelVisualTheme menuTheme = menuLevel.getVisualTheme();
+        final String menuBackgroundPath = menuLevel.getBackgroundPath();
 
         // Top HUD labels
         ImageView sunStorageIcon = new ImageView(ImageAssets.load("file:src/assets/sun.png"));
@@ -39,11 +49,12 @@ public class GameApp extends Application {
         sunStorageIcon.setPreserveRatio(true);
 
         Label sunLabel = new Label("200");
-        sunLabel.setStyle("-fx-font-size: 20px; -fx-text-fill: yellow;");
+        sunLabel.setStyle(menuTheme.getSunLabelStyle());
 
         HBox sunBox = new HBox(sunStorageIcon, sunLabel);
         sunBox.setSpacing(6);
         sunBox.setAlignment(Pos.CENTER_LEFT);
+        sunBox.setStyle(menuTheme.getResourceBoxStyle());
 
         ImageView waterStorageIcon = new ImageView(ImageAssets.load("file:src/assets/water.png"));
         waterStorageIcon.setFitWidth(120);
@@ -51,22 +62,24 @@ public class GameApp extends Application {
         waterStorageIcon.setPreserveRatio(true);
 
         Label waterLabel = new Label("100");
-        waterLabel.setStyle("-fx-font-size: 20px; -fx-text-fill: lightblue;");
+        waterLabel.setStyle(menuTheme.getWaterLabelStyle());
 
         HBox waterBox = new HBox(waterStorageIcon, waterLabel);
         waterBox.setSpacing(6);
         waterBox.setAlignment(Pos.CENTER_LEFT);
+        waterBox.setStyle(menuTheme.getResourceBoxStyle());
 
         ProgressBar waveProgressBar = new ProgressBar(0);
         waveProgressBar.setPrefWidth(180);
+        waveProgressBar.setStyle(menuTheme.getWaveProgressBarStyle());
 
         Label flag1 = new Label("⚑");
         Label flag2 = new Label("⚑");
         Label flag3 = new Label("⚑");
 
-        flag1.setStyle("-fx-font-size: 18px; -fx-text-fill: gray;");
-        flag2.setStyle("-fx-font-size: 18px; -fx-text-fill: gray;");
-        flag3.setStyle("-fx-font-size: 18px; -fx-text-fill: gray;");
+        flag1.setStyle(menuTheme.getInactiveFlagStyle());
+        flag2.setStyle(menuTheme.getInactiveFlagStyle());
+        flag3.setStyle(menuTheme.getInactiveFlagStyle());
 
         HBox flagBar = new HBox(flag1, flag2, flag3);
         flagBar.setSpacing(55);
@@ -195,7 +208,7 @@ public class GameApp extends Application {
         // Top bar shown during gameplay
         VBox waveBox = new VBox(waveProgressBar, flagBar);
         waveBox.setSpacing(4);
-        waveBox.setStyle("-fx-background-color: rgba(0,0,0,0.35); -fx-padding: 10; -fx-background-radius: 12;");
+        waveBox.setStyle(menuTheme.getWaveBoxStyle());
         waveBox.setPrefWidth(240);
 
         Pane spacer = new Pane();
@@ -216,14 +229,7 @@ public class GameApp extends Application {
         plantPanel.setSpacing(10);
         plantPanel.setAlignment(Pos.CENTER_LEFT);
 
-        plantPanel.setStyle(
-            "-fx-background-color: rgba(20,20,20,0.45);" +
-            "-fx-padding: 12;" +
-            "-fx-background-radius: 20;" +
-            "-fx-border-radius: 20;" +
-            "-fx-border-color: rgba(255,255,255,0.18);" +
-            "-fx-border-width: 1.5;"
-        );
+        plantPanel.setStyle(menuTheme.getPlantPanelStyle());
 
         HBox topBar = new HBox(
                 sunBox,
@@ -241,17 +247,17 @@ public class GameApp extends Application {
         StackPane root = new StackPane();
 
         // gameSurface = fixed-size game world
-        Pane gameSurface = new Pane();
+        StackPane gameSurface = new StackPane();
         gameSurface.setPrefSize(DESIGN_WIDTH, DESIGN_HEIGHT);
 
         // Background image for the whole game world
-        ImageView globalBg = new ImageView(ImageAssets.load("file:src/assets/battlezone.png"));
-        globalBg.setFitWidth(DESIGN_WIDTH);
-        globalBg.setFitHeight(DESIGN_HEIGHT);
+        ImageView globalBg = new ImageView();
+        configureBackground(globalBg, menuBackgroundPath, DESIGN_WIDTH, DESIGN_HEIGHT);
 
         // contentLayer = what changes (menu, settings, game layout)
         Pane contentLayer = new Pane();
         contentLayer.setPrefSize(DESIGN_WIDTH, DESIGN_HEIGHT);
+        StackPane.setAlignment(contentLayer, Pos.TOP_LEFT);
 
         // Put background first, then changing content on top
         gameSurface.getChildren().addAll(globalBg, contentLayer);
@@ -267,93 +273,121 @@ public class GameApp extends Application {
         // Show menu first
         contentLayer.getChildren().setAll(menu);
 
-        // Start button -> create a fresh board and show the game page
         menu.getStartButton().setOnAction(e -> {
-            GameBoard board = new GameBoard();
-            boardRef[0] = board;
-
-            // Reset UI state for a new game
-            restartButton.setVisible(true);
-            gameOverOverlay.setVisible(false);
-            gameOverOverlay.setMouseTransparent(true);
-            pauseButton.setVisible(true);
-            resumeButton.setVisible(false);
-            mainMenuButton.setVisible(true);
-            winOverlay.setVisible(false);
-
-            // Default selected plant when game starts
-            board.setSelectedPlantType(PlantType.PEA_SHOOTER);
-            peaShooterCard.setSelected(true);
-            wallPlantCard.setSelected(false);
-            sunflowerCard.setSelected(false);
-            waterPlantCard.setSelected(false);
-            bombPlantCard.setSelected(false);
-            // Connect plant selection buttons to THIS board
-            setupPlantButtons(boardRef, peaShooterCard, wallPlantCard, sunflowerCard, waterPlantCard, bombPlantCard);
-
-            // Restart should also create a fresh new board
-            restartButton.setOnAction(e2 -> {
-                GameBoard newBoard = new GameBoard();
-                boardRef[0] = newBoard;
-
-                restartButton.setVisible(true);
-                gameOverOverlay.setVisible(false);
-                gameOverOverlay.setMouseTransparent(true);
-                pauseButton.setVisible(true);
-                resumeButton.setVisible(false);
-                mainMenuButton.setVisible(true);
-                winOverlay.setVisible(false);
-
-                newBoard.setSelectedPlantType(PlantType.PEA_SHOOTER);
-                peaShooterCard.setSelected(true);
-                wallPlantCard.setSelected(false);
-                sunflowerCard.setSelected(false);
-                waterPlantCard.setSelected(false);
-                bombPlantCard.setSelected(false);
-
-                setupPlantButtons(boardRef, peaShooterCard, wallPlantCard, sunflowerCard, waterPlantCard, bombPlantCard);
-                
-
-                VBox newGameLayout = buildGameLayout(
-                        newBoard,
-                        topBar,
-                        waveBox,
-                        gameOverOverlay,
-                        pauseButton,
-                        resumeButton,
-                        mainMenuButton,
-                        winOverlay,
-                        DESIGN_WIDTH,
-                        DESIGN_HEIGHT
-                );
-
-                contentLayer.getChildren().setAll(newGameLayout);
-            });
-
-            VBox gameLayout = buildGameLayout(
-                    board,
+            activeLevelTypeRef[0] = LevelType.DAY;
+            launchGame(
+                    activeLevelTypeRef[0],
+                    boardRef,
+                    globalBg,
+                    contentLayer,
+                    sunStorageIcon,
+                    waterStorageIcon,
+                    sunBox,
+                    waterBox,
+                    sunLabel,
+                    waterLabel,
                     topBar,
+                    plantPanel,
                     waveBox,
+                    waveProgressBar,
+                    flag1,
+                    flag2,
+                    flag3,
                     gameOverOverlay,
                     pauseButton,
                     resumeButton,
                     mainMenuButton,
                     winOverlay,
+                    restartButton,
+                    peaShooterCard,
+                    wallPlantCard,
+                    sunflowerCard,
+                    waterPlantCard,
+                    bombPlantCard,
                     DESIGN_WIDTH,
                     DESIGN_HEIGHT
             );
+        });
 
-            contentLayer.getChildren().setAll(gameLayout);
+        menu.getNightModeButton().setOnAction(e -> {
+            activeLevelTypeRef[0] = LevelType.NIGHT;
+            launchGame(
+                    activeLevelTypeRef[0],
+                    boardRef,
+                    globalBg,
+                    contentLayer,
+                    sunStorageIcon,
+                    waterStorageIcon,
+                    sunBox,
+                    waterBox,
+                    sunLabel,
+                    waterLabel,
+                    topBar,
+                    plantPanel,
+                    waveBox,
+                    waveProgressBar,
+                    flag1,
+                    flag2,
+                    flag3,
+                    gameOverOverlay,
+                    pauseButton,
+                    resumeButton,
+                    mainMenuButton,
+                    winOverlay,
+                    restartButton,
+                    peaShooterCard,
+                    wallPlantCard,
+                    sunflowerCard,
+                    waterPlantCard,
+                    bombPlantCard,
+                    DESIGN_WIDTH,
+                    DESIGN_HEIGHT
+            );
+        });
+
+        restartButton.setOnAction(e -> {
+            launchGame(
+                    activeLevelTypeRef[0],
+                    boardRef,
+                    globalBg,
+                    contentLayer,
+                    sunStorageIcon,
+                    waterStorageIcon,
+                    sunBox,
+                    waterBox,
+                    sunLabel,
+                    waterLabel,
+                    topBar,
+                    plantPanel,
+                    waveBox,
+                    waveProgressBar,
+                    flag1,
+                    flag2,
+                    flag3,
+                    gameOverOverlay,
+                    pauseButton,
+                    resumeButton,
+                    mainMenuButton,
+                    winOverlay,
+                    restartButton,
+                    peaShooterCard,
+                    wallPlantCard,
+                    sunflowerCard,
+                    waterPlantCard,
+                    bombPlantCard,
+                    DESIGN_WIDTH,
+                    DESIGN_HEIGHT
+            );
         });
 
         // Settings page
         menu.getSettingsButton().setOnAction(e -> {
-            contentLayer.getChildren().setAll(settingsPage);
+            showScreen(contentLayer, globalBg, menuBackgroundPath, settingsPage);
         });
 
         // Back from settings to menu
         settingsPage.getBackButton().setOnAction(e -> {
-            contentLayer.getChildren().setAll(menu);
+            showScreen(contentLayer, globalBg, menuBackgroundPath, menu);
         });
 
         // Quit button closes app
@@ -371,10 +405,9 @@ public class GameApp extends Application {
                     boolean isLost = gameState == GameState.LOST;
                     boolean isWon = gameState == GameState.WON;
                     boolean isPaused = gameState == GameState.PAUSED;
+                    LevelVisualTheme activeTheme = boardRef[0].getLevel().getVisualTheme();
 
-                    flag1.setStyle("-fx-font-size: 18px; -fx-text-fill: " + (currentWave >= 1 ? "red;" : "gray;"));
-                    flag2.setStyle("-fx-font-size: 18px; -fx-text-fill: " + (currentWave >= 2 ? "red;" : "gray;"));
-                    flag3.setStyle("-fx-font-size: 18px; -fx-text-fill: " + (currentWave >= 3 ? "red;" : "gray;"));
+                    updateFlagStyles(activeTheme, currentWave, flag1, flag2, flag3);
                     sunLabel.setText("" + boardRef[0].getSunPoints());
                     waterLabel.setText("" + boardRef[0].getWaterPoints());
                     peaShooterCard.setOnCooldown(boardRef[0].getRemainingCooldownMillis(PlantType.PEA_SHOOTER) > 0);
@@ -422,7 +455,7 @@ public class GameApp extends Application {
                     gameOverOverlay.setVisible(false);
                     gameOverOverlay.setMouseTransparent(true);
 
-                    contentLayer.getChildren().setAll(menu);
+                    showScreen(contentLayer, globalBg, menuBackgroundPath, menu);
                 });
                 winRestartButton.setOnAction(e -> {
                     if (restartButton.getOnAction() != null) {
@@ -441,7 +474,7 @@ public class GameApp extends Application {
                     gameOverOverlay.setVisible(false);
                     gameOverOverlay.setMouseTransparent(true);
 
-                    contentLayer.getChildren().setAll(menu);
+                    showScreen(contentLayer, globalBg, menuBackgroundPath, menu);
                 });
             }
         };
@@ -458,7 +491,7 @@ public class GameApp extends Application {
             gameOverOverlay.setVisible(false);
             gameOverOverlay.setMouseTransparent(true);
 
-            contentLayer.getChildren().setAll(menu);
+            showScreen(contentLayer, globalBg, menuBackgroundPath, menu);
         });
 
         // Window size
@@ -500,7 +533,7 @@ public class GameApp extends Application {
             double designWidth,
             double designHeight
     ) {
-        GameBoardView boardView = new GameBoardView();
+        GameBoardView boardView = new GameBoardView(board.getLevel(), board.getGraves());
         boardView.setCellClickHandler((row, col) -> {
             Plant plant = board.placePlantAt(row, col);
 
@@ -511,7 +544,10 @@ public class GameApp extends Application {
         board.setPlantRemovedHandler(boardView::removePlantFromCell);
             
         Pane battlefieldPane = new Pane();
-        battlefieldPane.setPrefSize(1600, 700);
+        battlefieldPane.setPrefSize(designWidth, 700);
+        battlefieldPane.setStyle("-fx-background-color: transparent;");
+        Rectangle battlefieldTint = createBattlefieldTint(board.getLevel(), designWidth, 700);
+        Pane atmosphereLayer = createAtmosphereLayer(board.getLevel(), designWidth, 700);
 
         boardView.setLayoutX(40);
         boardView.setLayoutY(-15);
@@ -520,6 +556,12 @@ public class GameApp extends Application {
         board.setLayoutY(-15);
         board.setPickOnBounds(false);
 
+        if (battlefieldTint != null) {
+            battlefieldPane.getChildren().add(battlefieldTint);
+        }
+        if (atmosphereLayer != null) {
+            battlefieldPane.getChildren().add(atmosphereLayer);
+        }
         battlefieldPane.getChildren().addAll(boardView, board, waveBox, winOverlay, gameOverOverlay);
 
         waveBox.setLayoutX(1200);
@@ -533,8 +575,233 @@ public class GameApp extends Application {
         layout.setSpacing(10);
         layout.setAlignment(Pos.TOP_LEFT);
         layout.setPadding(new Insets(0, 0, 0, 0));
+        layout.setPrefSize(designWidth, designHeight);
 
         return layout;
+    }
+
+    private void launchGame(
+            LevelType levelType,
+            GameBoard[] boardRef,
+            ImageView globalBg,
+            Pane contentLayer,
+            ImageView sunStorageIcon,
+            ImageView waterStorageIcon,
+            HBox sunBox,
+            HBox waterBox,
+            Label sunLabel,
+            Label waterLabel,
+            HBox topBar,
+            HBox plantPanel,
+            VBox waveBox,
+            ProgressBar waveProgressBar,
+            Label flag1,
+            Label flag2,
+            Label flag3,
+            VBox gameOverOverlay,
+            Button pauseButton,
+            Button resumeButton,
+            Button mainMenuButton,
+            VBox winOverlay,
+            Button restartButton,
+            PlantCard peaShooterCard,
+            PlantCard wallPlantCard,
+            PlantCard sunflowerCard,
+            PlantCard waterPlantCard,
+            PlantCard bombPlantCard,
+            double designWidth,
+            double designHeight
+    ) {
+        Level level = Levels.create(levelType);
+        LevelVisualTheme visualTheme = level.getVisualTheme();
+        GameBoard board = new GameBoard(level);
+        boardRef[0] = board;
+
+        configureBackground(globalBg, visualTheme.getBackgroundPath(), designWidth, designHeight);
+        applyLevelTheme(
+                visualTheme,
+                sunStorageIcon,
+                waterStorageIcon,
+                sunBox,
+                waterBox,
+                sunLabel,
+                waterLabel,
+                plantPanel,
+                waveBox,
+                waveProgressBar,
+                flag1,
+                flag2,
+                flag3
+        );
+        resetGameplayUi(restartButton, gameOverOverlay, pauseButton, resumeButton, mainMenuButton, winOverlay);
+        resetPlantSelection(board, peaShooterCard, wallPlantCard, sunflowerCard, waterPlantCard, bombPlantCard);
+        setupPlantButtons(boardRef, peaShooterCard, wallPlantCard, sunflowerCard, waterPlantCard, bombPlantCard);
+
+        VBox gameLayout = buildGameLayout(
+                board,
+                topBar,
+                waveBox,
+                gameOverOverlay,
+                pauseButton,
+                resumeButton,
+                mainMenuButton,
+                winOverlay,
+                designWidth,
+                designHeight
+        );
+
+        contentLayer.getChildren().setAll(gameLayout);
+    }
+
+    private Rectangle createBattlefieldTint(Level level, double width, double height) {
+        LevelVisualTheme theme = level.getVisualTheme();
+
+        if (!theme.hasBattlefieldTint()) {
+            return null;
+        }
+
+        Rectangle tint = new Rectangle(width, height);
+        tint.setFill(Color.web(theme.getBattlefieldTintColor(), theme.getBattlefieldTintOpacity()));
+        tint.setMouseTransparent(true);
+        return tint;
+    }
+
+    private Pane createAtmosphereLayer(Level level, double width, double height) {
+        LevelVisualTheme theme = level.getVisualTheme();
+
+        if (!theme.hasAtmosphereMist()) {
+            return null;
+        }
+
+        Pane atmosphereLayer = new Pane();
+        atmosphereLayer.setPrefSize(width, height);
+        atmosphereLayer.setMouseTransparent(true);
+
+        Ellipse upperMist = createMistEllipse(
+                theme,
+                width * 0.34,
+                height * 0.20,
+                width * 0.34,
+                height * 0.10
+        );
+        Ellipse lowerMist = createMistEllipse(
+                theme,
+                width * 0.72,
+                height * 0.63,
+                width * 0.28,
+                height * 0.09
+        );
+        Ellipse centerMist = createMistEllipse(
+                theme,
+                width * 0.53,
+                height * 0.40,
+                width * 0.22,
+                height * 0.07
+        );
+
+        atmosphereLayer.getChildren().addAll(upperMist, lowerMist, centerMist);
+        return atmosphereLayer;
+    }
+
+    private void showScreen(Pane contentLayer, ImageView globalBg, String backgroundPath, Node screen) {
+        configureBackground(globalBg, backgroundPath, contentLayer.getPrefWidth(), contentLayer.getPrefHeight());
+        contentLayer.getChildren().setAll(screen);
+    }
+
+    private void configureBackground(ImageView backgroundView, String backgroundPath, double width, double height) {
+        backgroundView.setImage(ImageAssets.load(backgroundPath));
+        backgroundView.setFitWidth(width);
+        backgroundView.setFitHeight(height);
+        backgroundView.setPreserveRatio(false);
+        backgroundView.setMouseTransparent(true);
+    }
+
+    private void applyLevelTheme(
+            LevelVisualTheme theme,
+            ImageView sunStorageIcon,
+            ImageView waterStorageIcon,
+            HBox sunBox,
+            HBox waterBox,
+            Label sunLabel,
+            Label waterLabel,
+            HBox plantPanel,
+            VBox waveBox,
+            ProgressBar waveProgressBar,
+            Label flag1,
+            Label flag2,
+            Label flag3
+    ) {
+        sunBox.setStyle(theme.getResourceBoxStyle());
+        waterBox.setStyle(theme.getResourceBoxStyle());
+        sunLabel.setStyle(theme.getSunLabelStyle());
+        waterLabel.setStyle(theme.getWaterLabelStyle());
+        sunStorageIcon.setEffect(createResourceCounterEffect(theme));
+        waterStorageIcon.setEffect(createResourceCounterEffect(theme));
+        sunLabel.setEffect(createResourceCounterEffect(theme));
+        waterLabel.setEffect(createResourceCounterEffect(theme));
+        plantPanel.setStyle(theme.getPlantPanelStyle());
+        waveBox.setStyle(theme.getWaveBoxStyle());
+        waveProgressBar.setStyle(theme.getWaveProgressBarStyle());
+        updateFlagStyles(theme, 0, flag1, flag2, flag3);
+    }
+
+    private DropShadow createResourceCounterEffect(LevelVisualTheme theme) {
+        if (!theme.hasResourceEffect()) {
+            return null;
+        }
+
+        DropShadow shadow = new DropShadow();
+        shadow.setColor(Color.web(theme.getResourceEffectColor(), theme.getResourceEffectOpacity()));
+        shadow.setRadius(theme.getResourceEffectRadius());
+        shadow.setSpread(0.22);
+        return shadow;
+    }
+
+    private Ellipse createMistEllipse(LevelVisualTheme theme, double centerX, double centerY, double radiusX, double radiusY) {
+        Ellipse mist = new Ellipse(centerX, centerY, radiusX, radiusY);
+        mist.setFill(Color.web(theme.getAtmosphereMistColor(), theme.getAtmosphereMistOpacity()));
+        mist.setEffect(new GaussianBlur(theme.getAtmosphereMistBlurRadius()));
+        mist.setMouseTransparent(true);
+        return mist;
+    }
+
+    private void updateFlagStyles(LevelVisualTheme theme, int currentWave, Label flag1, Label flag2, Label flag3) {
+        flag1.setStyle(currentWave >= 1 ? theme.getActiveFlagStyle() : theme.getInactiveFlagStyle());
+        flag2.setStyle(currentWave >= 2 ? theme.getActiveFlagStyle() : theme.getInactiveFlagStyle());
+        flag3.setStyle(currentWave >= 3 ? theme.getActiveFlagStyle() : theme.getInactiveFlagStyle());
+    }
+
+    private void resetGameplayUi(
+            Button restartButton,
+            VBox gameOverOverlay,
+            Button pauseButton,
+            Button resumeButton,
+            Button mainMenuButton,
+            VBox winOverlay
+    ) {
+        restartButton.setVisible(true);
+        gameOverOverlay.setVisible(false);
+        gameOverOverlay.setMouseTransparent(true);
+        pauseButton.setVisible(true);
+        resumeButton.setVisible(false);
+        mainMenuButton.setVisible(true);
+        winOverlay.setVisible(false);
+    }
+
+    private void resetPlantSelection(
+            GameBoard board,
+            PlantCard peaShooterCard,
+            PlantCard wallPlantCard,
+            PlantCard sunflowerCard,
+            PlantCard waterPlantCard,
+            PlantCard bombPlantCard
+    ) {
+        board.setSelectedPlantType(PlantType.PEA_SHOOTER);
+        peaShooterCard.setSelected(true);
+        wallPlantCard.setSelected(false);
+        sunflowerCard.setSelected(false);
+        waterPlantCard.setSelected(false);
+        bombPlantCard.setSelected(false);
     }
 
     /**
