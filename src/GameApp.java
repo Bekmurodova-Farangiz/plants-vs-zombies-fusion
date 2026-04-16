@@ -22,6 +22,11 @@ import javafx.stage.Stage;
 
 public class GameApp extends Application {
 
+    private static final String CAGE_CARD_ID = "CageAbility";
+    private static final String CAGE_IMAGE_PATH = "file:src/assets/cage.png";
+    private static final int CAGE_SUN_COST = 50;
+    private static final int CAGE_WATER_COST = 50;
+
     @Override
     public void start(Stage stage) {
         // Fixed "design size" of the whole game world.
@@ -201,6 +206,12 @@ public class GameApp extends Application {
                 PlantType.BOMB_PLANT.getSunCost(),
                 PlantType.BOMB_PLANT.getWaterCost()
         );
+        PlantCard cageCard = new PlantCard(
+                CAGE_CARD_ID,
+                CAGE_IMAGE_PATH,
+                CAGE_SUN_COST,
+                CAGE_WATER_COST
+        );
 
         // Default selected style
         peaShooterCard.setSelected(true);
@@ -223,7 +234,8 @@ public class GameApp extends Application {
         wallPlantCard,
         sunflowerCard,
         waterPlantCard,
-        bombPlantCard
+        bombPlantCard,
+        cageCard
         );
 
         plantPanel.setSpacing(10);
@@ -304,6 +316,7 @@ public class GameApp extends Application {
                     sunflowerCard,
                     waterPlantCard,
                     bombPlantCard,
+                    cageCard,
                     DESIGN_WIDTH,
                     DESIGN_HEIGHT
             );
@@ -340,6 +353,7 @@ public class GameApp extends Application {
                     sunflowerCard,
                     waterPlantCard,
                     bombPlantCard,
+                    cageCard,
                     DESIGN_WIDTH,
                     DESIGN_HEIGHT
             );
@@ -375,6 +389,7 @@ public class GameApp extends Application {
                     sunflowerCard,
                     waterPlantCard,
                     bombPlantCard,
+                    cageCard,
                     DESIGN_WIDTH,
                     DESIGN_HEIGHT
             );
@@ -415,6 +430,8 @@ public class GameApp extends Application {
                     sunflowerCard.setOnCooldown(boardRef[0].getRemainingCooldownMillis(PlantType.SUNFLOWER) > 0);
                     waterPlantCard.setOnCooldown(boardRef[0].getRemainingCooldownMillis(PlantType.WATER_PLANT) > 0);
                     bombPlantCard.setOnCooldown(boardRef[0].getRemainingCooldownMillis(PlantType.BOMB_PLANT) > 0);
+                    cageCard.setOnCooldown(boardRef[0].getRemainingCageCooldownMillis() > 0);
+                    syncSelectionState(boardRef[0], peaShooterCard, wallPlantCard, sunflowerCard, waterPlantCard, bombPlantCard, cageCard);
                     waveProgressBar.setProgress(boardRef[0].getWaveProgress());
 
                     gameOverOverlay.setVisible(isLost);
@@ -609,6 +626,7 @@ public class GameApp extends Application {
             PlantCard sunflowerCard,
             PlantCard waterPlantCard,
             PlantCard bombPlantCard,
+            PlantCard cageCard,
             double designWidth,
             double designHeight
     ) {
@@ -634,8 +652,8 @@ public class GameApp extends Application {
                 flag3
         );
         resetGameplayUi(restartButton, gameOverOverlay, pauseButton, resumeButton, mainMenuButton, winOverlay);
-        resetPlantSelection(board, peaShooterCard, wallPlantCard, sunflowerCard, waterPlantCard, bombPlantCard);
-        setupPlantButtons(boardRef, peaShooterCard, wallPlantCard, sunflowerCard, waterPlantCard, bombPlantCard);
+        resetPlantSelection(board, peaShooterCard, wallPlantCard, sunflowerCard, waterPlantCard, bombPlantCard, cageCard);
+        setupPlantButtons(boardRef, peaShooterCard, wallPlantCard, sunflowerCard, waterPlantCard, bombPlantCard, cageCard);
 
         VBox gameLayout = buildGameLayout(
                 board,
@@ -794,14 +812,11 @@ public class GameApp extends Application {
             PlantCard wallPlantCard,
             PlantCard sunflowerCard,
             PlantCard waterPlantCard,
-            PlantCard bombPlantCard
+            PlantCard bombPlantCard,
+            PlantCard cageCard
     ) {
         board.setSelectedPlantType(PlantType.PEA_SHOOTER);
-        peaShooterCard.setSelected(true);
-        wallPlantCard.setSelected(false);
-        sunflowerCard.setSelected(false);
-        waterPlantCard.setSelected(false);
-        bombPlantCard.setSelected(false);
+        syncSelectionState(board, peaShooterCard, wallPlantCard, sunflowerCard, waterPlantCard, bombPlantCard, cageCard);
     }
 
     /**
@@ -815,62 +830,70 @@ public class GameApp extends Application {
             PlantCard wallPlantCard,
             PlantCard sunflowerCard,
             PlantCard waterPlantCard,
-            PlantCard bombPlantCard
+            PlantCard bombPlantCard,
+            PlantCard cageCard
     ) {
         peaShooterCard.setOnMouseClicked(e -> {
             if (boardRef[0] != null) {
                 boardRef[0].setSelectedPlantType(PlantType.PEA_SHOOTER);
+                syncSelectionState(boardRef[0], peaShooterCard, wallPlantCard, sunflowerCard, waterPlantCard, bombPlantCard, cageCard);
             }
-            peaShooterCard.setSelected(true);
-            wallPlantCard.setSelected(false);
-            sunflowerCard.setSelected(false);
-            waterPlantCard.setSelected(false);
-            bombPlantCard.setSelected(false);
         });
 
         wallPlantCard.setOnMouseClicked(e -> {
             if (boardRef[0] != null) {
                 boardRef[0].setSelectedPlantType(PlantType.WALL_PLANT);
+                syncSelectionState(boardRef[0], peaShooterCard, wallPlantCard, sunflowerCard, waterPlantCard, bombPlantCard, cageCard);
             }
-            peaShooterCard.setSelected(false);
-            wallPlantCard.setSelected(true);
-            sunflowerCard.setSelected(false);
-            waterPlantCard.setSelected(false);
-            bombPlantCard.setSelected(false);
         });
 
         sunflowerCard.setOnMouseClicked(e -> {
             if (boardRef[0] != null) {
                 boardRef[0].setSelectedPlantType(PlantType.SUNFLOWER);
+                syncSelectionState(boardRef[0], peaShooterCard, wallPlantCard, sunflowerCard, waterPlantCard, bombPlantCard, cageCard);
             }
-            peaShooterCard.setSelected(false);
-            wallPlantCard.setSelected(false);
-            sunflowerCard.setSelected(true);
-            waterPlantCard.setSelected(false);
-            bombPlantCard.setSelected(false);
         });
 
         waterPlantCard.setOnMouseClicked(e -> {
             if (boardRef[0] != null) {
                 boardRef[0].setSelectedPlantType(PlantType.WATER_PLANT);
+                syncSelectionState(boardRef[0], peaShooterCard, wallPlantCard, sunflowerCard, waterPlantCard, bombPlantCard, cageCard);
             }
-            peaShooterCard.setSelected(false);
-            wallPlantCard.setSelected(false);
-            sunflowerCard.setSelected(false);
-            waterPlantCard.setSelected(true);
-            bombPlantCard.setSelected(false);
         });
 
         bombPlantCard.setOnMouseClicked(e -> {
             if (boardRef[0] != null) {
                 boardRef[0].setSelectedPlantType(PlantType.BOMB_PLANT);
+                syncSelectionState(boardRef[0], peaShooterCard, wallPlantCard, sunflowerCard, waterPlantCard, bombPlantCard, cageCard);
             }
-            peaShooterCard.setSelected(false);
-            wallPlantCard.setSelected(false);
-            sunflowerCard.setSelected(false);
-            waterPlantCard.setSelected(false);
-            bombPlantCard.setSelected(true);
         });
+
+        cageCard.setOnMouseClicked(e -> {
+            if (boardRef[0] != null) {
+                boardRef[0].activateCageMode();
+                syncSelectionState(boardRef[0], peaShooterCard, wallPlantCard, sunflowerCard, waterPlantCard, bombPlantCard, cageCard);
+            }
+        });
+    }
+
+    private void syncSelectionState(
+            GameBoard board,
+            PlantCard peaShooterCard,
+            PlantCard wallPlantCard,
+            PlantCard sunflowerCard,
+            PlantCard waterPlantCard,
+            PlantCard bombPlantCard,
+            PlantCard cageCard
+    ) {
+        boolean cageSelected = board != null && board.isCageModeActive();
+        PlantType selectedPlantType = board != null ? board.getSelectedPlantType() : null;
+
+        peaShooterCard.setSelected(!cageSelected && selectedPlantType == PlantType.PEA_SHOOTER);
+        wallPlantCard.setSelected(!cageSelected && selectedPlantType == PlantType.WALL_PLANT);
+        sunflowerCard.setSelected(!cageSelected && selectedPlantType == PlantType.SUNFLOWER);
+        waterPlantCard.setSelected(!cageSelected && selectedPlantType == PlantType.WATER_PLANT);
+        bombPlantCard.setSelected(!cageSelected && selectedPlantType == PlantType.BOMB_PLANT);
+        cageCard.setSelected(cageSelected);
     }
 
     /**

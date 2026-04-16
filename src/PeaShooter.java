@@ -1,5 +1,6 @@
 import javafx.animation.KeyFrame;
 import javafx.animation.Timeline;
+import javafx.scene.effect.Glow;
 import javafx.scene.image.Image;
 import javafx.util.Duration;
 
@@ -15,9 +16,14 @@ public class PeaShooter extends Plant {
     private static final int IDLE_FRAME_INDEX = 0;
     private static final int FIRE_FRAME_INDEX = 2;
     private static final int FINAL_FRAME_INDEX = ANIMATION_FRAMES.length - 1;
+    private static final int MAX_FUSION_LEVEL = 2;
+    private static final double FUSED_GLOW_LEVEL = 0.4;
+    private static final double DOUBLE_SHOT_VERTICAL_OFFSET = 18.0;
 
     private Timeline animationTimeline;
     private int currentFrame = IDLE_FRAME_INDEX;
+    private final Glow fusedGlow = new Glow(FUSED_GLOW_LEVEL);
+    private int fusionLevel = 1;
 
     public PeaShooter(int row, int col) {
         super(row, col);
@@ -41,7 +47,7 @@ public class PeaShooter extends Plant {
             new KeyFrame(FRAME_DURATION, e -> applyFrame(1)),
             new KeyFrame(FRAME_DURATION.multiply(FIRE_FRAME_INDEX), e -> {
                 applyFrame(FIRE_FRAME_INDEX);
-                board.fireBulletFromPlant(this);
+                fireShots(board);
             }),
             // Keep the last frame on screen briefly before returning to idle.
             new KeyFrame(FRAME_DURATION.multiply(FINAL_FRAME_INDEX + 1))
@@ -58,6 +64,7 @@ public class PeaShooter extends Plant {
     @Override
     public void onRemoved() {
         stopAnimation();
+        getView().setEffect(null);
         resetToIdleFrame();
     }
 
@@ -79,7 +86,25 @@ public class PeaShooter extends Plant {
     public void onGameEnded() {
         super.onGameEnded();
         stopAnimation();
+        getView().setEffect(null);
         resetToIdleFrame();
+    }
+
+    public boolean canFuse() {
+        return fusionLevel < MAX_FUSION_LEVEL;
+    }
+
+    public void fuse() {
+        if (!canFuse()) {
+            return;
+        }
+
+        fusionLevel++;
+        updateFusionVisual();
+    }
+
+    public int getFusionLevel() {
+        return fusionLevel;
     }
 
     private void resetToIdleFrame() {
@@ -89,6 +114,24 @@ public class PeaShooter extends Plant {
     private void applyFrame(int frameIndex) {
         currentFrame = frameIndex;
         getView().setImage(ANIMATION_FRAMES[currentFrame]);
+        updateFusionVisual();
+    }
+
+    private void fireShots(GameBoard board) {
+        if (fusionLevel <= 1) {
+            board.fireBulletFromPlant(this);
+            return;
+        }
+
+        double bulletX = getShootOriginX() - (Bullet.WIDTH / 2.0);
+        double bulletY = getShootOriginY() - (Bullet.HEIGHT / 2.0);
+
+        board.fireBullet(bulletX, bulletY - DOUBLE_SHOT_VERTICAL_OFFSET);
+        board.fireBullet(bulletX, bulletY + DOUBLE_SHOT_VERTICAL_OFFSET);
+    }
+
+    private void updateFusionVisual() {
+        getView().setEffect(fusionLevel > 1 ? fusedGlow : null);
     }
 
     private void stopAnimation() {

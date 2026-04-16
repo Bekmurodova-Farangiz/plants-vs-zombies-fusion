@@ -21,6 +21,10 @@ public class GameBoard extends Pane {
     private static final int CELL_HEIGHT = BoardMetrics.CELL_HEIGHT;
     private static final double INITIAL_PREPARATION_SECONDS = 12.0;
     private static final double BETWEEN_WAVES_BREAK_SECONDS = 5.0;
+    private static final double CAGE_TRAP_DURATION_SECONDS = 10.0;
+    private static final long CAGE_COOLDOWN_MILLIS = 8_000L;
+    private static final int CAGE_SUN_COST = 50;
+    private static final int CAGE_WATER_COST = 50;
     private final Level level;
     private List<Plant> plants = new ArrayList<>();    //plants stores all plant objects on the board
     private List<Zombie> zombies = new ArrayList<>(); //zombies stores all zombie objects on the board
@@ -46,6 +50,8 @@ public class GameBoard extends Pane {
     private BoardCell[][] cells = new BoardCell[ROWS][COLUMNS];
     private final List<Grave> graves = new ArrayList<>();
     private Consumer<Plant> plantRemovedHandler;
+    private boolean cageModeActive;
+    private long cageCooldownEndMillis;
     
     //Constructor
     public GameBoard() {
@@ -133,6 +139,7 @@ public class GameBoard extends Pane {
         Zombie zombie = ZombieFactory.createZombie(zombieType, spawnLocation.getRow());
 
         positionZombie(zombie, spawnLocation);
+        configureZombieInteractions(zombie);
         zombies.add(zombie);
         getChildren().add(zombie.getView());
         startGameLoop(zombie);
@@ -172,6 +179,13 @@ public class GameBoard extends Pane {
                     zombie.stopAllActions();
                     return;
                 }
+
+                zombie.updateStatusEffects();
+
+                if (zombie.isTrapped()) {
+                    return;
+                }
+
                 boolean colliding = checkCollisions(zombie);
 
                 if (colliding) {
@@ -199,7 +213,7 @@ public class GameBoard extends Pane {
                 continue;
             }
 
-            if (zombie.getView().localToScene(zombie.getView().getBoundsInLocal())
+            if (zombie.getBodyView().localToScene(zombie.getBodyView().getBoundsInLocal())
                     .intersects(plant.getView().localToScene(plant.getView().getBoundsInLocal()))) {
 
                 plant.takeDamage(zombie.getAttackDamage());
@@ -223,6 +237,14 @@ public class GameBoard extends Pane {
 
         double bulletX = plant.getShootOriginX() - (Bullet.WIDTH / 2.0);
         double bulletY = plant.getShootOriginY() - (Bullet.HEIGHT / 2.0);
+
+        fireBullet(bulletX, bulletY);
+    }
+
+    public void fireBullet(double bulletX, double bulletY) {
+        if (isMatchEnded()) {
+            return;
+        }
 
         Bullet bullet = new Bullet(bulletX, bulletY);
         bullet.getView().setMouseTransparent(true);
@@ -271,7 +293,8 @@ public class GameBoard extends Pane {
             for (int j = zombies.size() - 1; j >= 0; j--) { //We also loop through zombies.
                 Zombie zombie = zombies.get(j);
 
-                if (bullet.getView().getBoundsInParent().intersects(zombie.getView().getBoundsInParent())) { //Checks whether bullet and zombie overlap visually.
+                if (bullet.getView().localToScene(bullet.getView().getBoundsInLocal())
+                        .intersects(zombie.getBodyView().localToScene(zombie.getBodyView().getBoundsInLocal()))) { //Checks whether bullet and zombie overlap visually.
                     zombie.takeDamage(bullet.getDamage());
 
                     getChildren().remove(bullet.getView());
@@ -309,7 +332,7 @@ public class GameBoard extends Pane {
     }
 
     private int getZombieColumn(Zombie zombie) {
-        double zombieWidth = zombie.getView().getBoundsInLocal().getWidth();
+        double zombieWidth = zombie.getVisualWidth();
         double zombieCenterX = zombie.getView().getTranslateX() + (zombieWidth / 2.0);
         return (int) Math.floor(zombieCenterX / CELL_WIDTH);
     }
@@ -449,6 +472,7 @@ public class GameBoard extends Pane {
         return gameState == GameState.LOST;
     }
     public void setSelectedPlantType(PlantType type) {
+        deactivateCageMode();
         this.selectedPlantType = type;
         System.out.println("Selected plant: " + type.getIdentifier());
     }
@@ -544,6 +568,48 @@ public class GameBoard extends Pane {
     }
     public long getRemainingCooldownMillis(String plantType) {
         return getRemainingCooldownMillis(PlantType.fromIdentifier(plantType));
+    }
+    public boolean activateCageMode() {
+        if (!isRunning() || getRemainingCageCooldownMillis() > 0) {
+            return false;
+        }
+
+        if (!hasEnoughResources(CAGE_SUN_COST, CAGE_WATER_COST)) {
+            return false;
+        }
+
+        cageModeActive = true;
+        return true;
+    }
+
+    public void deactivateCageMode() {
+        cageModeActive = false;
+    }
+
+    public boolean isCageModeActive() {
+        return cageModeActive;
+    }
+
+    public long getRemainingCageCooldownMillis() {
+        return Math.max(0, cageCooldownEndMillis - System.currentTimeMillis());
+    }
+
+    public boolean tryUseCageOnZombie(Zombie zombie) {
+        if (!cageModeActive || zombie == null || zombie.isDead() || !zombies.contains(zombie)) {
+            return false;
+        }
+
+        if (!hasEnoughResources(CAGE_SUN_COST, CAGE_WATER_COST)) {
+            cageModeActive = false;
+            return false;
+        }
+
+        sunPoints -= CAGE_SUN_COST;
+        waterPoints -= CAGE_WATER_COST;
+        zombie.trapForSeconds(CAGE_TRAP_DURATION_SECONDS);
+        cageModeActive = false;
+        cageCooldownEndMillis = System.currentTimeMillis() + CAGE_COOLDOWN_MILLIS;
+        return true;
     }
     public boolean isWaveCleared() {
         return !waveInProgress && zombies.isEmpty();
@@ -704,6 +770,10 @@ public class GameBoard extends Pane {
             return null;
         }
 
+        if (cageModeActive) {
+            return null;
+        }
+
         BoardCell cell = cells[row][col];
 
         if (cell.hasGrave()) {
@@ -741,10 +811,18 @@ public class GameBoard extends Pane {
     }
 
     private Plant tryFusePlant(BoardCell cell) {
-        if (selectedPlantType != PlantType.SUNFLOWER) {
-            return null;
+        if (selectedPlantType == PlantType.SUNFLOWER) {
+            return tryFuseSunflower(cell);
         }
 
+        if (selectedPlantType == PlantType.PEA_SHOOTER) {
+            return tryFusePeaShooter(cell);
+        }
+
+        return null;
+    }
+
+    private Plant tryFuseSunflower(BoardCell cell) {
         Plant occupant = cell.getOccupant();
 
         if (!(occupant instanceof Sunflower)) {
@@ -775,8 +853,48 @@ public class GameBoard extends Pane {
         return sunflower;
     }
 
+    private Plant tryFusePeaShooter(BoardCell cell) {
+        Plant occupant = cell.getOccupant();
+
+        if (!(occupant instanceof PeaShooter)) {
+            return null;
+        }
+
+        PeaShooter peaShooter = (PeaShooter) occupant;
+
+        if (!peaShooter.canFuse()) {
+            System.out.println("PeaShooter is already at maximum fusion level.");
+            return null;
+        }
+
+        if (isOnCooldown(selectedPlantType)) {
+            System.out.println(selectedPlantType.getIdentifier() + " is on cooldown!");
+            return null;
+        }
+
+        if (!hasEnoughResources(selectedPlantType)) {
+            return null;
+        }
+
+        consumeResourcesFor(selectedPlantType);
+        applyCooldownFor(selectedPlantType);
+        peaShooter.fuse();
+
+        System.out.println("Fused PeaShooter at row " + cell.getRow() + ", col " + cell.getCol());
+        return peaShooter;
+    }
+
     private boolean hasEnoughResources(PlantType plantType) {
         if (sunPoints < plantType.getSunCost() || waterPoints < plantType.getWaterCost()) {
+            System.out.println("Not enough resources!");
+            return false;
+        }
+
+        return true;
+    }
+
+    private boolean hasEnoughResources(int sunCost, int waterCost) {
+        if (sunPoints < sunCost || waterPoints < waterCost) {
             System.out.println("Not enough resources!");
             return false;
         }
@@ -843,6 +961,7 @@ public class GameBoard extends Pane {
 
     private void stopAllGameplay() {
         waveInProgress = false;
+        cageModeActive = false;
 
         stopTimeline(globalLoop);
         stopTimeline(zombieSpawner);
@@ -924,7 +1043,7 @@ public class GameBoard extends Pane {
     }
 
     private void positionZombie(Zombie zombie, ZombieSpawnLocation spawnLocation) {
-        double zombieWidth = zombie.getView().getBoundsInLocal().getWidth();
+        double zombieWidth = zombie.getVisualWidth();
         double x;
 
         if (spawnLocation.isFromGrave()) {
@@ -938,7 +1057,15 @@ public class GameBoard extends Pane {
 
         zombie.getView().setTranslateX(x);
         zombie.getView().setTranslateY(y);
-        zombie.getView().setMouseTransparent(true);
+        zombie.getView().setMouseTransparent(false);
+    }
+
+    private void configureZombieInteractions(Zombie zombie) {
+        zombie.getView().setOnMouseClicked(event -> {
+            if (tryUseCageOnZombie(zombie)) {
+                event.consume();
+            }
+        });
     }
 
     private static final class ZombieSpawnLocation {
