@@ -367,6 +367,10 @@ public class GameApp extends Application {
             public void handle(long now) {
                 if (boardRef[0] != null) {
                     int currentWave = boardRef[0].getCurrentWave();
+                    GameState gameState = boardRef[0].getGameState();
+                    boolean isLost = gameState == GameState.LOST;
+                    boolean isWon = gameState == GameState.WON;
+                    boolean isPaused = gameState == GameState.PAUSED;
 
                     flag1.setStyle("-fx-font-size: 18px; -fx-text-fill: " + (currentWave >= 1 ? "red;" : "gray;"));
                     flag2.setStyle("-fx-font-size: 18px; -fx-text-fill: " + (currentWave >= 2 ? "red;" : "gray;"));
@@ -380,39 +384,20 @@ public class GameApp extends Application {
                     bombPlantCard.setOnCooldown(boardRef[0].getRemainingCooldownMillis(PlantType.BOMB_PLANT) > 0);
                     waveProgressBar.setProgress(boardRef[0].getWaveProgress());
 
-                    if (boardRef[0].isGameOver()) {
-                        gameOverOverlay.setVisible(true);
-                        gameOverOverlay.setMouseTransparent(false);
-                        pauseButton.setVisible(false);
-                        resumeButton.setVisible(false);
-                        mainMenuButton.setVisible(false);
-                    } else {
-                        gameOverOverlay.setVisible(false);
-                        gameOverOverlay.setMouseTransparent(true);
-                    }
+                    gameOverOverlay.setVisible(isLost);
+                    gameOverOverlay.setMouseTransparent(!isLost);
 
-                    if (boardRef[0].isGameWon()) {
-                        winOverlay.setVisible(true);
-                        winLabel.setVisible(true);
-                        winRestartButton.setVisible(true);
-                        winMenuButton.setVisible(true);
+                    winOverlay.setVisible(isWon);
+                    winLabel.setVisible(isWon);
+                    winRestartButton.setVisible(isWon);
+                    winMenuButton.setVisible(isWon);
 
-                        pauseButton.setVisible(false);
-                        resumeButton.setVisible(false);
-                        mainMenuButton.setVisible(false);
-                    } else {
-                        winOverlay.setVisible(false);
-                        winLabel.setVisible(false);
-                        winRestartButton.setVisible(false);
-                        winMenuButton.setVisible(false);
-
-                        if (!gameOverOverlay.isVisible()) {
-                            mainMenuButton.setVisible(true);
-                        }
-                    }
+                    pauseButton.setVisible(gameState == GameState.RUNNING);
+                    resumeButton.setVisible(isPaused);
+                    mainMenuButton.setVisible(!isLost && !isWon);
                 }
                 pauseButton.setOnAction(e -> {
-                    if (boardRef[0] != null) {
+                    if (boardRef[0] != null && boardRef[0].getGameState() == GameState.RUNNING) {
                         boardRef[0].pauseGame();
                         pauseButton.setVisible(false);
                         resumeButton.setVisible(true);
@@ -420,7 +405,7 @@ public class GameApp extends Application {
                 });
 
                 resumeButton.setOnAction(e -> {
-                    if (boardRef[0] != null) {
+                    if (boardRef[0] != null && boardRef[0].getGameState() == GameState.PAUSED) {
                         boardRef[0].resumeGame();
                         pauseButton.setVisible(true);
                         resumeButton.setVisible(false);
@@ -428,7 +413,6 @@ public class GameApp extends Application {
                 });
                 mainMenuButton.setOnAction(e -> {
                     if (boardRef[0] != null) {
-                        boardRef[0].setPaused(false);
                         boardRef[0] = null;
                     }
 
@@ -447,7 +431,6 @@ public class GameApp extends Application {
                 });
                 winMenuButton.setOnAction(e -> {
                     if (boardRef[0] != null) {
-                        boardRef[0].setPaused(false);
                         boardRef[0] = null;
                     }
 
@@ -466,7 +449,6 @@ public class GameApp extends Application {
 
         gameOverMenuButton.setOnAction(e -> {
             if (boardRef[0] != null) {
-                boardRef[0].setPaused(false);
                 boardRef[0] = null;
             }
 

@@ -25,7 +25,7 @@ public class GameBoard extends Pane {
     private List<Bullet> bullets = new ArrayList<>();  //bullets added to the storage
     private ArrayList<Sun> suns = new ArrayList<>();
     private ArrayList<WaterDrop> waterDrops = new ArrayList<>();
-    private boolean gameOver = false; //Global state
+    private GameState gameState = GameState.RUNNING;
     private int sunPoints = 250; //Player's starting points
     private int waterPoints = 100;
     private Timeline zombieSpawner;
@@ -34,8 +34,6 @@ public class GameBoard extends Pane {
     private PlantType selectedPlantType = PlantType.PEA_SHOOTER;
     private Map<PlantType, Long> plantCooldowns = new HashMap<>();
     private Timeline globalLoop;
-    private boolean paused = false;
-    private boolean gameWon = false;
     private int currentWave = 1;
     private int totalWaves;
     private int zombiesSpawnedInWave = 0;
@@ -331,7 +329,7 @@ public class GameBoard extends Pane {
     }
 
     private void beginCurrentWave() {
-        if (paused || isMatchEnded()) {
+        if (!isRunning()) {
             return;
         }
 
@@ -363,7 +361,7 @@ public class GameBoard extends Pane {
 
         zombieSpawner = new Timeline(
             new KeyFrame(Duration.seconds(spawnIntervalSeconds), e -> {
-                if (paused || isMatchEnded()) {
+                if (!isRunning()) {
                     return;
                 }
                 if (!waveInProgress) {
@@ -415,8 +413,13 @@ public class GameBoard extends Pane {
     public int getSunPoints() {
         return sunPoints;
     }
+
+    public GameState getGameState() {
+        return gameState;
+    }
+
     public boolean isGameOver() {
-        return gameOver;
+        return gameState == GameState.LOST;
     }
     public void setSelectedPlantType(PlantType type) {
         this.selectedPlantType = type;
@@ -550,7 +553,7 @@ public class GameBoard extends Pane {
         globalLoop = new Timeline(
             new KeyFrame(Duration.millis(50), e -> {
 
-                if (paused || isMatchEnded()) {
+                if (!isRunning()) {
                     return;
                 }
 
@@ -601,19 +604,17 @@ public class GameBoard extends Pane {
         globalLoop.setCycleCount(Timeline.INDEFINITE);
         globalLoop.play();
     }
+
     public boolean isPaused() {
-        return paused;
+        return gameState == GameState.PAUSED;
     }
 
-    public void setPaused(boolean paused) {
-        this.paused = paused;
-    }
     public void pauseGame() {
-        if (isMatchEnded()) {
+        if (!isRunning()) {
             return;
         }
 
-        paused = true;
+        gameState = GameState.PAUSED;
 
         if (globalLoop != null) {
             globalLoop.pause();
@@ -637,11 +638,11 @@ public class GameBoard extends Pane {
     }
 
     public void resumeGame() {
-        if (isMatchEnded()) {
+        if (gameState != GameState.PAUSED) {
             return;
         }
 
-        paused = false;
+        gameState = GameState.RUNNING;
 
         if (globalLoop != null) {
             globalLoop.play();
@@ -663,23 +664,16 @@ public class GameBoard extends Pane {
             zombie.resumeActions();
         }
     }
+
     public boolean isGameWon(){
-        return gameWon;
+        return gameState == GameState.WON;
     }
 
-    public void setGameWon(boolean gameWon){
-        if (gameWon) {
-            endGameAsWon();
-            return;
-        }
-
-        this.gameWon = false;
-    }
     public void setPlantRemovedHandler(Consumer<Plant> plantRemovedHandler) {
         this.plantRemovedHandler = plantRemovedHandler;
     }
     public Plant placePlantAt(int row, int col) {
-        if (paused || isMatchEnded()) {
+        if (!isRunning()) {
             return null;
         }
 
@@ -802,7 +796,7 @@ public class GameBoard extends Pane {
             return;
         }
 
-        gameOver = true;
+        gameState = GameState.LOST;
         stopAllGameplay();
     }
 
@@ -811,12 +805,11 @@ public class GameBoard extends Pane {
             return;
         }
 
-        gameWon = true;
+        gameState = GameState.WON;
         stopAllGameplay();
     }
 
     private void stopAllGameplay() {
-        paused = false;
         waveInProgress = false;
 
         stopTimeline(globalLoop);
@@ -839,7 +832,11 @@ public class GameBoard extends Pane {
     }
 
     private boolean isMatchEnded() {
-        return gameOver || gameWon;
+        return gameState == GameState.WON || gameState == GameState.LOST;
+    }
+
+    private boolean isRunning() {
+        return gameState == GameState.RUNNING;
     }
 
     private void stopTimeline(Timeline timeline) {
