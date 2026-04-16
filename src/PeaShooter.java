@@ -35,7 +35,7 @@ public class PeaShooter extends Plant {
     }
 
     public void playShootAnimation(GameBoard board) {
-        if (board == null || isDead()) {
+        if (board == null || isDead() || isInfected()) {
             return;
         }
 
@@ -77,9 +77,19 @@ public class PeaShooter extends Plant {
 
     @Override
     public void onGameResumed(GameBoard board) {
+        if (isInfected()) {
+            return;
+        }
+
         if (animationTimeline != null && animationTimeline.getStatus() == Timeline.Status.PAUSED) {
             animationTimeline.play();
         }
+    }
+
+    @Override
+    protected void onInfected() {
+        stopAnimation();
+        resetToIdleFrame();
     }
 
     @Override
@@ -118,6 +128,10 @@ public class PeaShooter extends Plant {
     }
 
     private void fireShots(GameBoard board) {
+        if (isInfected()) {
+            return;
+        }
+
         if (fusionLevel <= 1) {
             board.fireBulletFromPlant(this);
             return;

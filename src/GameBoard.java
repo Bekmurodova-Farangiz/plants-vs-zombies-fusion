@@ -95,34 +95,36 @@ public class GameBoard extends Pane {
         waves.add(new Wave(
             6,
             4.5,
-            createZombieProbabilities(0.85, 0.15, 0.0, 0.0)
+            createZombieProbabilities(0.85, 0.15, 0.0, 0.0, 0.0)
         ));
 
         // Wave 2 (medium)
         waves.add(new Wave(
             10,
             3.0,
-            createZombieProbabilities(0.50, 0.30, 0.20, 0.0)
+            createZombieProbabilities(0.45, 0.25, 0.20, 0.0, 0.10)
         ));
 
         // Wave 3 (hard)
         waves.add(new Wave(
             14,
             2.2,
-            createZombieProbabilities(0.35, 0.25, 0.20, 0.20)
+            createZombieProbabilities(0.30, 0.20, 0.20, 0.15, 0.15)
         ));
     }
     private Map<ZombieType, Double> createZombieProbabilities(
             double normalChance,
             double fastChance,
             double fatChance,
-            double tankChance
+            double tankChance,
+            double parasiteChance
     ) {
         Map<ZombieType, Double> probabilities = new EnumMap<>(ZombieType.class);
         probabilities.put(ZombieType.NORMAL, normalChance);
         probabilities.put(ZombieType.FAST, fastChance);
         probabilities.put(ZombieType.FAT, fatChance);
         probabilities.put(ZombieType.TANK, tankChance);
+        probabilities.put(ZombieType.PARASITE, parasiteChance);
         return probabilities;
     }
     private void configureWave(Wave wave) {
@@ -215,23 +217,33 @@ public class GameBoard extends Pane {
 
             if (zombie.getBodyView().localToScene(zombie.getBodyView().getBoundsInLocal())
                     .intersects(plant.getView().localToScene(plant.getView().getBoundsInLocal()))) {
-
-                plant.takeDamage(zombie.getAttackDamage());
-                System.out.println("Zombie is attacking a plant!");
-
-                if (plant.isDead()) {
-                    removePlant(plant, iterator);
-                    zombie.startMoving();
-                    System.out.println("Plant destroyed by zombie!");
-                }
-                return true;
+                return handlePlantCollision(zombie, plant, iterator);
             }
         }
 
         return false;
     }
+    private boolean handlePlantCollision(Zombie zombie, Plant plant, Iterator<Plant> iterator) {
+        if (zombie instanceof ParasiteZombie) {
+            if (!plant.isInfected()) {
+                plant.infect();
+                System.out.println("Plant infected by parasite zombie!");
+            }
+            return false;
+        }
+
+        plant.takeDamage(zombie.getAttackDamage());
+        System.out.println("Zombie is attacking a plant!");
+
+        if (plant.isDead()) {
+            removePlant(plant, iterator);
+            zombie.startMoving();
+            System.out.println("Plant destroyed by zombie!");
+        }
+        return true;
+    }
     public void fireBulletFromPlant(Plant plant) {
-        if (isMatchEnded()) {
+        if (isMatchEnded() || plant == null || plant.isInfected()) {
             return;
         }
 
@@ -253,7 +265,7 @@ public class GameBoard extends Pane {
         getChildren().add(bullet.getView());
     }
     public void shootFromPlant(Plant plant) {
-        if (isMatchEnded()) {
+        if (isMatchEnded() || plant == null || plant.isInfected()) {
             return;
         }
 
@@ -267,12 +279,12 @@ public class GameBoard extends Pane {
     }
     // auto shooting system 
     public void startShooting(Plant plant) {
-        if (plant.getShootingInterval() <= 0 || isMatchEnded()) {
+        if (plant == null || plant.isInfected() || plant.getShootingInterval() <= 0 || isMatchEnded()) {
             return;
         }
         Timeline shooter = new Timeline(
             new KeyFrame(Duration.seconds(plant.getShootingInterval()), e -> {
-                if (isMatchEnded() || plant.isDead() || !plants.contains(plant)) {
+                if (isMatchEnded() || plant.isDead() || plant.isInfected() || !plants.contains(plant)) {
                     return;
                 }
 
@@ -506,7 +518,7 @@ public class GameBoard extends Pane {
         spawnSunFromPlant(plant, 25);
     }
     public void spawnSunFromPlant(Plant plant, int amount) {
-        if (isMatchEnded()) {
+        if (isMatchEnded() || plant == null || plant.isInfected()) {
             return;
         }
 
@@ -534,7 +546,7 @@ public class GameBoard extends Pane {
         System.out.println("Water points: " + waterPoints);
     }
     public void spawnWaterDropFromPlant(Plant plant) {
-        if (isMatchEnded()) {
+        if (isMatchEnded() || plant == null || plant.isInfected()) {
             return;
         }
 
@@ -782,6 +794,10 @@ public class GameBoard extends Pane {
         }
 
         if (cell.isOccupied()) {
+            if (cell.getOccupant().isInfected()) {
+                System.out.println("Cannot place or fuse on an infected plant.");
+                return null;
+            }
             return tryFusePlant(cell);
         }
 

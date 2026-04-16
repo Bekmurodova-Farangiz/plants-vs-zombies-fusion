@@ -32,6 +32,10 @@ public class WaterPlant extends Plant {
     }
 
     private void startWaterProduction(GameBoard board) {
+        if (isInfected()) {
+            return;
+        }
+
         this.board = board;
         stopTimeline(waterTimeline);
 
@@ -43,6 +47,10 @@ public class WaterPlant extends Plant {
     }
 
     private void startAnimation() {
+        if (isInfected()) {
+            return;
+        }
+
         stopTimeline(animationTimeline);
 
         animationTimeline = new Timeline(
@@ -60,6 +68,16 @@ public class WaterPlant extends Plant {
     @Override
     public void onGameResumed(GameBoard board) {
         resumeProduction(board);
+    }
+
+    @Override
+    protected void onInfected() {
+        stopTimeline(waterTimeline);
+        stopTimeline(animationTimeline);
+        waterTimeline = null;
+        animationTimeline = null;
+        board = null;
+        resetToIdleFrame();
     }
 
     @Override
@@ -89,7 +107,7 @@ public class WaterPlant extends Plant {
     public void resumeProduction(GameBoard board) {
         this.board = board;
 
-        if (isDead()) {
+        if (isDead() || isInfected()) {
             return;
         }
 
@@ -111,7 +129,7 @@ public class WaterPlant extends Plant {
     }
 
     private void produceWater() {
-        if (isDead() || board == null) {
+        if (isDead() || isInfected() || board == null) {
             return;
         }
 
@@ -120,6 +138,10 @@ public class WaterPlant extends Plant {
     }
 
     private void advanceAnimationFrame() {
+        if (isInfected()) {
+            return;
+        }
+
         currentFrame = (currentFrame + 1) % ANIMATION_FRAMES.length;
         getView().setImage(ANIMATION_FRAMES[currentFrame]);
     }

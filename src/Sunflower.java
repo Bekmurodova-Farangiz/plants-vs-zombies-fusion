@@ -37,11 +37,15 @@ public class Sunflower extends Plant {
     }
 
     public void startSunProduction(GameBoard board) {
+        if (isInfected()) {
+            return;
+        }
+
         this.board = board;
         stopTimeline(productionTimeline);
         productionTimeline = new Timeline(
             new KeyFrame(ANIMATION_TRIGGER_OFFSET, e -> {
-                if (!isDead()) {
+                if (!isDead() && !isInfected()) {
                     playProductionAnimation(board);
                 }
             }),
@@ -55,7 +59,7 @@ public class Sunflower extends Plant {
     public void playProductionAnimation(GameBoard board) {
         this.board = board;
 
-        if (isDead()) {
+        if (isDead() || isInfected()) {
             return;
         }
 
@@ -92,7 +96,7 @@ public class Sunflower extends Plant {
     public void resumeProduction(GameBoard board) {
         this.board = board;
 
-        if (isDead()) {
+        if (isDead() || isInfected()) {
             return;
         }
 
@@ -119,6 +123,16 @@ public class Sunflower extends Plant {
     }
 
     @Override
+    protected void onInfected() {
+        stopTimeline(productionTimeline);
+        stopTimeline(animationTimeline);
+        productionTimeline = null;
+        animationTimeline = null;
+        board = null;
+        resetToIdleFrame();
+    }
+
+    @Override
     public void onGameEnded() {
         super.onGameEnded();
         stopTimeline(productionTimeline);
@@ -138,7 +152,7 @@ public class Sunflower extends Plant {
     }
 
     private void produceSun() {
-        if (isDead() || board == null) {
+        if (isDead() || isInfected() || board == null) {
             return;
         }
 

@@ -37,7 +37,7 @@ public class BombPlant extends Plant {
 
     @Override
     public boolean blocksZombies() {
-        return !exploding;
+        return !isInfected() && !exploding;
     }
 
     @Override
@@ -83,6 +83,10 @@ public class BombPlant extends Plant {
 
     @Override
     public void onPlaced(GameBoard board) {
+        if (isInfected()) {
+            return;
+        }
+
         this.board = board;
         startFuse();
     }
@@ -110,6 +114,10 @@ public class BombPlant extends Plant {
 
     @Override
     public void onGameResumed(GameBoard board) {
+        if (isInfected()) {
+            return;
+        }
+
         this.board = board;
 
         if (explosionTimeline != null) {
@@ -132,8 +140,22 @@ public class BombPlant extends Plant {
         board = null;
     }
 
+    @Override
+    protected void onInfected() {
+        stopTimeline(fuseTimeline);
+        stopTimeline(explosionTimeline);
+        fuseTimeline = null;
+        explosionTimeline = null;
+        board = null;
+        exploding = false;
+        detonated = true;
+        getView().setViewport(null);
+        setPlantImage(IDLE_IMAGE_PATH);
+        configureView();
+    }
+
     private void startFuse() {
-        if (detonated || fuseTimeline != null) {
+        if (isInfected() || detonated || fuseTimeline != null) {
             return;
         }
 
@@ -145,7 +167,7 @@ public class BombPlant extends Plant {
     }
 
     private void beginExplosion() {
-        if (detonated || isDead() || board == null) {
+        if (detonated || isDead() || isInfected() || board == null) {
             return;
         }
 

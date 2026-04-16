@@ -13,6 +13,8 @@ public final class ZombieFactory {
                 return new FatZombie(row);
             case TANK:
                 return new TankZombie(row);
+            case PARASITE:
+                return new ParasiteZombie(row);
             default:
                 throw new IllegalArgumentException("Unsupported zombie type: " + type);
         }
