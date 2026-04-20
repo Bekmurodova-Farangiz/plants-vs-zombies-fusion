@@ -3,10 +3,10 @@ import java.util.List;
 
 public final class Levels {
 
-    private static final String DAY_BACKGROUND = "file:src/assets/battlezone.png";
-    private static final String NIGHT_BACKGROUND = "file:src/assets/nightmade.png";
-    private static final String GRAVE_1 = "file:src/assets/grave1.png";
-    private static final String GRAVE_2 = "file:src/assets/grave2.png";
+    private static final String DAY_BACKGROUND = "/assets/battlezone.PNG";
+    private static final String NIGHT_BACKGROUND = "/assets/nightmade.png";
+    private static final String GRAVE_1 = "/assets/grave1.png";
+    private static final String GRAVE_2 = "/assets/grave2.png";
     private static final List<String> NIGHT_GRAVE_IMAGES = List.of(GRAVE_1, GRAVE_2);
     private static final LevelVisualTheme DAY_THEME = new LevelVisualTheme(
             DAY_BACKGROUND,

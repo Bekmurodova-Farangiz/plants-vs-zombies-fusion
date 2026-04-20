@@ -23,7 +23,7 @@ import javafx.stage.Stage;
 public class GameApp extends Application {
 
     private static final String CAGE_CARD_ID = "CageAbility";
-    private static final String CAGE_IMAGE_PATH = "file:src/assets/cage.png";
+    private static final String CAGE_IMAGE_PATH = "/assets/cage.png";
     private static final int CAGE_SUN_COST = 50;
     private static final int CAGE_WATER_COST = 50;
 
@@ -47,7 +47,7 @@ public class GameApp extends Application {
         final String menuBackgroundPath = menuLevel.getBackgroundPath();
 
         // Top HUD labels
-        ImageView sunStorageIcon = new ImageView(ImageAssets.load("file:src/assets/sun.png"));
+        ImageView sunStorageIcon = new ImageView(ImageAssets.load("/assets/sun.png"));
         sunStorageIcon.setFitWidth(120);
         sunStorageIcon.setFitHeight(120);
         sunStorageIcon.setPreserveRatio(true);
@@ -60,7 +60,7 @@ public class GameApp extends Application {
         sunBox.setAlignment(Pos.CENTER_LEFT);
         sunBox.setStyle(menuTheme.getResourceBoxStyle());
 
-        ImageView waterStorageIcon = new ImageView(ImageAssets.load("file:src/assets/water.png"));
+        ImageView waterStorageIcon = new ImageView(ImageAssets.load("/assets/water.png"));
         waterStorageIcon.setFitWidth(120);
         waterStorageIcon.setFitHeight(130);
         waterStorageIcon.setPreserveRatio(true);
@@ -89,7 +89,7 @@ public class GameApp extends Application {
         flagBar.setSpacing(55);
         flagBar.setAlignment(Pos.CENTER_LEFT);
 
-        ImageView gameOverImage = new ImageView(ImageAssets.load("file:src/assets/Gameover.png"));
+        ImageView gameOverImage = new ImageView(ImageAssets.load("/assets/Gameover.png"));
         gameOverImage.setFitWidth(620);
         gameOverImage.setPreserveRatio(true);
 
@@ -132,7 +132,7 @@ public class GameApp extends Application {
         winRestartButton.setVisible(false);
 
         Button winMenuButton = new Button();
-        ImageView winMenuIcon = new ImageView(ImageAssets.load("file:src/assets/menu_icon.png"));
+        ImageView winMenuIcon = new ImageView(ImageAssets.load("/assets/menu_icon.png"));
         winMenuIcon.setFitWidth(55);
         winMenuIcon.setFitHeight(55);
         winMenuButton.setGraphic(winMenuIcon);
@@ -144,7 +144,7 @@ public class GameApp extends Application {
         winOverlay.setAlignment(Pos.CENTER);
         winOverlay.setVisible(false);
 
-        ImageView pauseIcon = new ImageView(ImageAssets.load("file:src/assets/pause_icon.png"));
+        ImageView pauseIcon = new ImageView(ImageAssets.load("/assets/pause_icon.png"));
         pauseIcon.setFitWidth(100);
         pauseIcon.setFitHeight(100);
 
@@ -152,7 +152,7 @@ public class GameApp extends Application {
         pauseButton.setGraphic(pauseIcon);
         pauseButton.setStyle("-fx-background-color: transparent; -fx-padding: 0;");
 
-        ImageView resumeIcon = new ImageView(ImageAssets.load("file:src/assets/resume_icon.png"));
+        ImageView resumeIcon = new ImageView(ImageAssets.load("/assets/resume_icon.png"));
         resumeIcon.setFitWidth(100);
         resumeIcon.setFitHeight(100);
 
@@ -161,7 +161,7 @@ public class GameApp extends Application {
         resumeButton.setStyle("-fx-background-color: transparent; -fx-padding: 0;");
         resumeButton.setVisible(false);
 
-        ImageView menuIcon = new ImageView(ImageAssets.load("file:src/assets/menu_icon.png"));
+        ImageView menuIcon = new ImageView(ImageAssets.load("/assets/menu_icon.png"));
         menuIcon.setFitWidth(100);
         menuIcon.setFitHeight(100);
 

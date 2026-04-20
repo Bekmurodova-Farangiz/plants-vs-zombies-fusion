@@ -6,8 +6,8 @@ import javafx.scene.layout.VBox;
 
 public class PlantCard extends VBox {
 
-    private static final String SUN_ICON_PATH = "file:src/assets/sun.png";
-    private static final String WATER_ICON_PATH = "file:src/assets/water.png";
+    private static final String SUN_ICON_PATH = "/assets/sun.png";
+    private static final String WATER_ICON_PATH = "/assets/water.png";
     private static final double PLANT_IMAGE_SIZE = 60;
     private static final double COST_ICON_SIZE = 26;
 

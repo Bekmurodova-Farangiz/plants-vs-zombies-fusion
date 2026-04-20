@@ -9,7 +9,7 @@ import javafx.scene.image.ImageView;
 public class Plant {
 
     private static final double DEFAULT_VIEW_SIZE = Math.min(BoardMetrics.CELL_WIDTH, BoardMetrics.CELL_HEIGHT) * 0.83;
-    private static final Image DEFAULT_IMAGE = ImageAssets.load("file:src/assets/peashooter.png");
+    private static final Image DEFAULT_IMAGE = ImageAssets.load("/assets/peashooter.png");
     private static final double INFECTED_OPACITY = 0.6;
     private static final double INFECTED_ROTATION_DEGREES = -7.0;
 

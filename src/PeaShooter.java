@@ -7,9 +7,9 @@ import javafx.util.Duration;
 public class PeaShooter extends Plant {
 
     private static final Image[] ANIMATION_FRAMES = ImageAssets.loadAll(
-        "file:src/assets/peashooter_animation/peashooter1.png",
-        "file:src/assets/peashooter_animation/peashooter2.png",
-        "file:src/assets/peashooter_animation/peashooter3.png"
+        "/assets/peashooter_animation/peashooter1.png",
+        "/assets/peashooter_animation/peashooter2.png",
+        "/assets/peashooter_animation/peashooter3.png"
     );
     private static final double SHOOTING_INTERVAL_SECONDS = 2.5;
     private static final Duration FRAME_DURATION = Duration.millis(165);

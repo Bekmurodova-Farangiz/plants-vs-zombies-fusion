@@ -6,6 +6,6 @@ public class TankZombie extends Zombie {
         setHealth(250);
         setSpeed(1.6);
         setAttackDamage(3);
-        setZombieImage("file:src/assets/tank_zombie.png");
+        setZombieImage("/assets/tank_zombie.png");
     }
 }

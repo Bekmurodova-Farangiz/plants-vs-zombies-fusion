@@ -6,8 +6,8 @@ import javafx.scene.layout.Pane;
 
 public class Zombie {
 
-    private static final Image DEFAULT_IMAGE = ImageAssets.load("file:src/assets/zombie.png");
-    private static final Image CAGE_IMAGE = ImageAssets.load("file:src/assets/cage.png");
+    private static final Image DEFAULT_IMAGE = ImageAssets.load("/assets/zombie.png");
+    private static final Image CAGE_IMAGE = ImageAssets.load("/assets/cage.png");
     private static final double VIEW_WIDTH = 130;
     private static final double VIEW_HEIGHT = 130;
 

@@ -1,9 +1,9 @@
 public enum PlantType {
-    PEA_SHOOTER("PeaShooter", "Pea Shooter", 50, 20, 1.5, "file:src/assets/peashooter.png"),
-    WALL_PLANT("WallPlant", "Wall Plant", 50, 40, 3.0, "file:src/assets/wallplant.png"),
-    SUNFLOWER("Sunflower", "Sunflower", 50, 10, 2.5, "file:src/assets/sunflower.png"),
-    WATER_PLANT("WaterPlant", "Water Plant", 50, 0, 2.5, "file:src/assets/waterplant1.png"),
-    BOMB_PLANT("BombPlant", "Bomb Plant", 100, 0, 5.0, "file:src/assets/bombplant.png");
+    PEA_SHOOTER("PeaShooter", "Pea Shooter", 50, 20, 1.5, "/assets/peashooter.png"),
+    WALL_PLANT("WallPlant", "Wall Plant", 50, 40, 3.0, "/assets/wallplant.png"),
+    SUNFLOWER("Sunflower", "Sunflower", 50, 10, 2.5, "/assets/sunflower.png"),
+    WATER_PLANT("WaterPlant", "Water Plant", 50, 0, 2.5, "/assets/waterplant1.png"),
+    BOMB_PLANT("BombPlant", "Bomb Plant", 100, 0, 5.0, "/assets/bombplant.png");
 
     private final String identifier;
     private final String displayName;

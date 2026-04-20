@@ -6,6 +6,6 @@ public class FatZombie extends Zombie {
         setHealth(300); // more health (normal ~100)
         setSpeed(0.3);  // slower than normal zombie
 
-        setZombieImage("file:src/assets/fat_zombie.png");
+        setZombieImage("/assets/fat_zombie.png");
     }
 }

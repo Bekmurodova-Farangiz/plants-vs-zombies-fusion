@@ -7,8 +7,8 @@ import javafx.util.Duration;
 
 public class BombPlant extends Plant {
 
-    private static final String IDLE_IMAGE_PATH = "file:src/assets/bombplant.png";
-    private static final Image EXPLOSION_SPRITE_SHEET = ImageAssets.load("file:src/assets/frams.png");
+    private static final String IDLE_IMAGE_PATH = "/assets/bombplant.png";
+    private static final Image EXPLOSION_SPRITE_SHEET = ImageAssets.load("/assets/frams.png");
     private static final Duration FUSE_DURATION = Duration.seconds(2);
     private static final Duration FRAME_DURATION = Duration.millis(100);
     private static final int EXPLOSION_FRAME_COUNT = 3;

@@ -6,13 +6,13 @@ import javafx.util.Duration;
 public class Sunflower extends Plant {
 
     private static final Image[] ANIMATION_FRAMES = ImageAssets.loadAll(
-        "file:src/assets/sunplant_animation/sunflower1.png",
-        "file:src/assets/sunplant_animation/sunflower2.png",
-        "file:src/assets/sunplant_animation/sunflower3.png",
-        "file:src/assets/sunplant_animation/sunflower4.png",
-        "file:src/assets/sunplant_animation/sunflower5.png"
+        "/assets/sunplant_animation/sunflower1.png",
+        "/assets/sunplant_animation/sunflower2.png",
+        "/assets/sunplant_animation/sunflower3.png",
+        "/assets/sunplant_animation/sunflower4.png",
+        "/assets/sunplant_animation/sunflower5.png"
     );
-    private static final Image FUSED_IMAGE = ImageAssets.load("file:src/assets/sunflower_double.png");
+    private static final Image FUSED_IMAGE = ImageAssets.load("/assets/sunflower_double.png");
     private static final Duration PRODUCTION_CYCLE = Duration.seconds(10);
     private static final Duration FRAME_DURATION = Duration.millis(150);
     private static final Duration ANIMATION_TRIGGER_OFFSET =

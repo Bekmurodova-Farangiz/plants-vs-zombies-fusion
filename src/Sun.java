@@ -3,7 +3,7 @@ import javafx.scene.image.ImageView;
 
 public class Sun {
 
-    private static final Image SUN_IMAGE = ImageAssets.load("file:src/assets/sun.png");
+    private static final Image SUN_IMAGE = ImageAssets.load("/assets/sun.png");
 
     private final ImageView view;
     private int value;

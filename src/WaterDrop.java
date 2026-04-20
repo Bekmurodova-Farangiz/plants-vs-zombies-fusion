@@ -3,7 +3,7 @@ import javafx.scene.image.ImageView;
 
 public class WaterDrop {
 
-    private static final Image WATER_DROP_IMAGE = ImageAssets.load("file:src/assets/water.png");
+    private static final Image WATER_DROP_IMAGE = ImageAssets.load("/assets/water.png");
 
     private final ImageView view;
     private int value;

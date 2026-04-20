@@ -3,7 +3,7 @@ import javafx.scene.image.ImageView;
 
 public class Bullet {
 
-    private static final Image BULLET_IMAGE = ImageAssets.load("file:src/assets/bullet.png");
+    private static final Image BULLET_IMAGE = ImageAssets.load("/assets/bullet.png");
 
     public static final double WIDTH = 100;
     public static final double HEIGHT = 100;

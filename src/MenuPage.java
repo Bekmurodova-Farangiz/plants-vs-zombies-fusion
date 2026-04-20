@@ -25,10 +25,10 @@ public class MenuPage extends VBox {
                 "-fx-effect: dropshadow(gaussian, rgba(0,0,0,0.65), 16, 0.35, 0, 5);"
         );
 
-        dayModeButton = createMenuButton("file:src/assets/menu_buttons/day_mode_button.png", "Day Mode");
-        nightModeButton = createMenuButton("file:src/assets/menu_buttons/night_mode_button.png", "Night Mode");
-        settingsButton = createMenuButton("file:src/assets/menu_buttons/settings_button.png", "Settings");
-        quitButton = createMenuButton("file:src/assets/menu_buttons/quit_button.png", "Quit");
+        dayModeButton = createMenuButton("/assets/menu_buttons/day_mode_button.png", "Day Mode");
+        nightModeButton = createMenuButton("/assets/menu_buttons/night_mode_button.png", "Night Mode");
+        settingsButton = createMenuButton("/assets/menu_buttons/settings_button.png", "Settings");
+        quitButton = createMenuButton("/assets/menu_buttons/quit_button.png", "Quit");
 
         setAlignment(Pos.CENTER);
         setSpacing(18);

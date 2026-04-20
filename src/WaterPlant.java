@@ -6,10 +6,10 @@ import javafx.util.Duration;
 public class WaterPlant extends Plant {
 
     private static final Image[] ANIMATION_FRAMES = ImageAssets.loadAll(
-        "file:src/assets/waterplant1.png",
-        "file:src/assets/waterplant2.png",
-        "file:src/assets/waterplant3.png",
-        "file:src/assets/waterplant4.png"
+        "/assets/waterplant1.png",
+        "/assets/waterplant2.png",
+        "/assets/waterplant3.png",
+        "/assets/waterplant4.png"
     );
     private static final Duration PRODUCTION_CYCLE = Duration.seconds(10);
     private static final Duration FRAME_DURATION = Duration.seconds(0.3);
