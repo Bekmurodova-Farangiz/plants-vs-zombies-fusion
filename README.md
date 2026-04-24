@@ -82,4 +82,4 @@ It demonstrates software engineering concepts through a fully interactive real-t
 
 ## Authors
 
-Developed by Farangiz Bekmurodova and team.
+Developed by Farangiz Bekmurodova and Durbek Turaev.
