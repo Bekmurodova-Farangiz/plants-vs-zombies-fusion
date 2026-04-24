@@ -53,22 +53,22 @@ This project features real-time gameplay, multiple enemy types, strategic resour
 ## Screenshots
 
 ### Main Menu
-Main Menu
+￼
 
 ### Day Mode Gameplay
-Day Mode
+￼
 
 ### Night Mode
-Night Mode
+￼
 
 ### Difficulty Settings
-Difficulty
+￼
 
 ### Victory Screen
-Victory
+￼
 
 ### Game Over Screen
-Game Over
+￼
 
 ## Authors
 
