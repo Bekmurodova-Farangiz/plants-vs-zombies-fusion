@@ -50,6 +50,26 @@ This project features real-time gameplay, multiple enemy types, strategic resour
 - Modularity
 - Reuse
 
+## Screenshots
+
+### Main Menu
+Main Menu
+
+### Day Mode Gameplay
+Day Mode
+
+### Night Mode
+Night Mode
+
+### Difficulty Settings
+Difficulty
+
+### Victory Screen
+Victory
+
+### Game Over Screen
+Game Over
+
 ## Authors
 
 Developed by Farangiz Bekmurodova and Turaev Durbek
