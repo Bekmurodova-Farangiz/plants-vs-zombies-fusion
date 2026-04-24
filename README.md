@@ -53,21 +53,22 @@ This project features real-time gameplay, multiple enemy types, strategic resour
 ## Screenshots
 
 ### Main Menu
-￼
+<img src="https://raw.githubusercontent.com/Bekmurodova-Farangiz/plants-vs-zombies-fusion/main/screenshots/menu-page.jpg" width="800">
 
 ### Day Mode Gameplay
-￼
+<img src="https://raw.githubusercontent.com/Bekmurodova-Farangiz/plants-vs-zombies-fusion/main/screenshots/day-mode.jpg" width="800">
 
 ### Night Mode
-￼
+<img src="https://raw.githubusercontent.com/Bekmurodova-Farangiz/plants-vs-zombies-fusion/main/screenshots/night-mode.jpg" width="800">
 
 ### Difficulty Settings
-￼
+<img src="https://raw.githubusercontent.com/Bekmurodova-Farangiz/plants-vs-zombies-fusion/main/screenshots/difficulty-page.jpg" width="800">
 
 ### Victory Screen
-￼
+<img src="https://raw.githubusercontent.com/Bekmurodova-Farangiz/plants-vs-zombies-fusion/main/screenshots/victory.jpg" width="800">
 
 ### Game Over Screen
+<img src="https://raw.githubusercontent.com/Bekmurodova-Farangiz/plants-vs-zombies-fusion/main/screenshots/game-over.jpg" width="800">
 ￼
 ￼
 
