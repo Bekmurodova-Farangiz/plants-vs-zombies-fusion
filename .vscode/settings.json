@@ -1,6 +1,0 @@
-{
-    "java.project.referencedLibraries": [
-        "/Users/user/Desktop/javafx-sdk-21.0.10/lib/*.jar"
-    ],
-    "java.jdt.ls.vmargs": "--module-path /Users/user/Desktop/javafx-sdk-21.0.10/lib --add-modules javafx.controls,javafx.fxml"
-}

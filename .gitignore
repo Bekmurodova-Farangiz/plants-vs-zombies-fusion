@@ -1,1 +1,18 @@
-*.class
+# macOS
+.DS_Store
+
+# IntelliJ / NetBeans / IDE files
+.idea/
+*.iml
+
+# VS Code
+.vscode/
+
+# Build folders
+bin/
+out/
+build/
+dist/
+
+# Logs
+*.log
