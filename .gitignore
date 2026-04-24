@@ -16,3 +16,6 @@ dist/
 
 # Logs
 *.log
+
+# Class files
+*.class
