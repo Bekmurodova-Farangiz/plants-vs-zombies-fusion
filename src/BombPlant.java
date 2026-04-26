@@ -83,12 +83,7 @@ public class BombPlant extends Plant {
 
     @Override
     public void onPlaced(GameBoard board) {
-        if (isInfected()) {
-            return;
-        }
-
-        this.board = board;
-        startFuse();
+        super.onPlaced(board);
     }
 
     @Override
@@ -138,6 +133,21 @@ public class BombPlant extends Plant {
         fuseTimeline = null;
         explosionTimeline = null;
         board = null;
+    }
+
+    @Override
+    public void act(GameBoard board) {
+        // Bomb plants act through their delayed explosion after placement.
+    }
+
+    @Override
+    public void specialAbility(GameBoard board) {
+        if (isInfected()) {
+            return;
+        }
+
+        this.board = board;
+        startFuse();
     }
 
     @Override

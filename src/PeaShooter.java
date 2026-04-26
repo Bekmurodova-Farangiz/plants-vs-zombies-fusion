@@ -100,6 +100,16 @@ public class PeaShooter extends Plant {
         resetToIdleFrame();
     }
 
+    @Override
+    public void act(GameBoard board) {
+        playShootAnimation(board);
+    }
+
+    @Override
+    public void specialAbility(GameBoard board) {
+        // Pea shooters rely on their regular attack cycle rather than a placement ability.
+    }
+
     public boolean canFuse() {
         return fusionLevel < MAX_FUSION_LEVEL;
     }

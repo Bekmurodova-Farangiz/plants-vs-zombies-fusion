@@ -6,7 +6,7 @@ import javafx.scene.image.ImageView;
 //import javafx.scene.paint.Color;
 //import javafx.scene.shape.Rectangle;
 
-public class Plant {
+public abstract class Plant {
 
     private static final double DEFAULT_VIEW_SIZE = Math.min(BoardMetrics.CELL_WIDTH, BoardMetrics.CELL_HEIGHT) * 0.83;
     private static final Image DEFAULT_IMAGE = ImageAssets.load("/assets/peashooter.png");
@@ -138,6 +138,7 @@ public class Plant {
         applyInfectedVisualEffect();
     }
     public void onPlaced(GameBoard board) {
+        specialAbility(board);
     }
     public void onRemoved() {
     }
@@ -152,6 +153,11 @@ public class Plant {
     public void onGameEnded() {
         stopShooting();
     }
+
+    public abstract void act(GameBoard board);
+
+    public abstract void specialAbility(GameBoard board);
+
     public void setShootingTimeline(Timeline shootingTimeline) {
         this.shootingTimeline = shootingTimeline;
     }

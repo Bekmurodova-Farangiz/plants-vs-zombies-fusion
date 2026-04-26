@@ -153,6 +153,7 @@ public class GameBoard extends Pane {
 
         positionZombie(zombie, spawnLocation);
         configureZombieInteractions(zombie);
+        zombie.onSpawn(this);
         zombies.add(zombie);
         getChildren().add(zombie.getView());
         startGameLoop(zombie);
@@ -211,7 +212,7 @@ public class GameBoard extends Pane {
                     zombie.stopMoving();  //	if touching a plant → no movement happens
                 } else {
                     zombie.startMoving();  //	if not touching → movement happens
-                    zombie.moveLeft();
+                    zombie.act(this);
                     checkGameOver(zombie);
                 }
             })
@@ -286,13 +287,7 @@ public class GameBoard extends Pane {
             return;
         }
 
-        if (plant instanceof PeaShooter) {
-            ((PeaShooter) plant).playShootAnimation(this);
-            return;
-        }
-
-        plant.onShotFired();
-        fireBulletFromPlant(plant);
+        plant.act(this);
     }
     // auto shooting system 
     public void startShooting(Plant plant) {

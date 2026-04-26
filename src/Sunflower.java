@@ -143,6 +143,16 @@ public class Sunflower extends Plant {
     }
 
     @Override
+    public void act(GameBoard board) {
+        // Sunflowers act passively through their production timeline.
+    }
+
+    @Override
+    public void specialAbility(GameBoard board) {
+        startSunProduction(board);
+    }
+
+    @Override
     public void onRemoved() {
         stopTimeline(productionTimeline);
         stopTimeline(animationTimeline);

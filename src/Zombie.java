@@ -4,7 +4,7 @@ import javafx.scene.image.Image;
 import javafx.scene.image.ImageView;
 import javafx.scene.layout.Pane;
 
-public class Zombie {
+public abstract class Zombie {
 
     private static final Image DEFAULT_IMAGE = ImageAssets.load("/assets/zombie.png");
     private static final Image CAGE_IMAGE = ImageAssets.load("/assets/cage.png");
@@ -119,6 +119,15 @@ public class Zombie {
             movementTimeline.stop();
         }
     }
+
+    public void onSpawn(GameBoard board) {
+        specialAbility(board);
+    }
+
+    public abstract void act(GameBoard board);
+
+    public abstract void specialAbility(GameBoard board);
+
     public int getRow() {
         return row;
     }

@@ -12,4 +12,14 @@ public class WallPlant extends Plant {
 
         
     }
+
+    @Override
+    public void act(GameBoard board) {
+        // Wall plants do not perform an active action.
+    }
+
+    @Override
+    public void specialAbility(GameBoard board) {
+        // Wall plants have no placement-triggered special ability.
+    }
 }

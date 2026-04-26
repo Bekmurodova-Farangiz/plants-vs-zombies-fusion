@@ -6,7 +6,7 @@ public final class ZombieFactory {
     public static Zombie createZombie(ZombieType type, int row) {
         switch (type) {
             case NORMAL:
-                return new Zombie(row);
+                return new NormalZombie(row);
             case FAST:
                 return new FastZombie(row);
             case FAT:

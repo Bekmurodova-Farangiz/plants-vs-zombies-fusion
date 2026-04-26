@@ -8,4 +8,14 @@ public class FatZombie extends Zombie {
 
         setZombieImage("/assets/fat_zombie.png");
     }
+
+    @Override
+    public void act(GameBoard board) {
+        moveLeft();
+    }
+
+    @Override
+    public void specialAbility(GameBoard board) {
+        // Fat zombies express their role through durability rather than an active ability.
+    }
 }

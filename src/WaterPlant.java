@@ -91,6 +91,16 @@ public class WaterPlant extends Plant {
     }
 
     @Override
+    public void act(GameBoard board) {
+        // Water plants act passively through their production timeline.
+    }
+
+    @Override
+    public void specialAbility(GameBoard board) {
+        resumeProduction(board);
+    }
+
+    @Override
     public void onRemoved() {
         stopTimeline(waterTimeline);
         stopTimeline(animationTimeline);
