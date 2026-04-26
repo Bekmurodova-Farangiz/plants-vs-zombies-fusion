@@ -1,4 +1,7 @@
 import java.net.URL;
+import java.nio.file.Files;
+import java.nio.file.Path;
+import java.nio.file.Paths;
 import java.util.Map;
 import java.util.concurrent.ConcurrentHashMap;
 import javafx.scene.image.Image;
@@ -47,10 +50,38 @@ public final class ImageAssets {
         URL resourceUrl = ImageAssets.class.getResource(resourcePath);
 
         if (resourceUrl == null) {
+            resourceUrl = findFileSystemResource(resourcePath);
+        }
+
+        if (resourceUrl == null) {
             throw new IllegalArgumentException("Missing image resource: " + resourcePath);
         }
 
         return new Image(resourceUrl.toExternalForm());
+    }
+
+    private static URL findFileSystemResource(String resourcePath) {
+        String relativePath = resourcePath.startsWith("/")
+                ? resourcePath.substring(1)
+                : resourcePath;
+
+        Path workingDirectory = Paths.get(System.getProperty("user.dir"));
+        Path[] candidates = new Path[] {
+                workingDirectory.resolve("src").resolve(relativePath),
+                workingDirectory.resolve(relativePath)
+        };
+
+        for (Path candidate : candidates) {
+            if (Files.isRegularFile(candidate)) {
+                try {
+                    return candidate.toUri().toURL();
+                } catch (Exception ignored) {
+                    return null;
+                }
+            }
+        }
+
+        return null;
     }
 
     private static String toResourcePath(String imagePath) {

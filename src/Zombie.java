@@ -67,12 +67,32 @@ public class Zombie {
     }
 
     public void takeDamage(int damage) {
+        if (damage <= 0) {
+            return;
+        }
+
         health -= damage;
         System.out.println("Zombie health: " + health);
     }
 
+    public void heal(int amount) {
+        if (amount <= 0 || !isAlive()) {
+            return;
+        }
+
+        health += amount;
+    }
+
+    public int getHealth() {
+        return health;
+    }
+
+    public boolean isAlive() {
+        return health > 0;
+    }
+
     public boolean isDead() {
-        return health <= 0;
+        return !isAlive();
     }
     public void moveLeft() {
         if (!moving || isTrapped()) {
@@ -105,16 +125,20 @@ public class Zombie {
     public double getSpeed() {
         return speed;
     }
-    public void setSpeed(double speed) {
+
+    protected void setSpeed(double speed) {
         this.speed = speed;
     }
-    public void setHealth(int health) {
+
+    protected void setHealth(int health) {
         this.health = health;
     }
-    public void setZombieImage(Image image) {
+
+    protected void setZombieImage(Image image) {
         bodyView.setImage(image);
     }
-    public void setZombieImage(String imagePath) {
+
+    protected void setZombieImage(String imagePath) {
         setZombieImage(ImageAssets.load(imagePath));
     }
     public void pauseActions() {
@@ -141,7 +165,7 @@ public class Zombie {
         return attackDamage;
     }
 
-    public void setAttackDamage(int attackDamage) {
+    protected void setAttackDamage(int attackDamage) {
         this.attackDamage = attackDamage;
     }
 

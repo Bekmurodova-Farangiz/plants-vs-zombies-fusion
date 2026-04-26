@@ -66,10 +66,25 @@ It demonstrates software engineering concepts through a fully interactive real-t
 
 ## How to Run
 
-1. Clone the repository
-2. Open in IntelliJ IDEA or VS Code
-3. Configure JavaFX if required
-4. Run Main.java
+1. Install JDK 21 and a JavaFX SDK.
+2. Either set `JAVAFX_HOME` to your JavaFX SDK folder or place `javafx-sdk-*` next to this project.
+3. Build with:
+
+```sh
+./build.sh
+```
+
+4. Run with:
+
+```sh
+./run.sh
+```
+
+The scripts automatically look for JavaFX in:
+
+- `JAVAFX_HOME`
+- `../javafx-sdk-*`
+- `~/Desktop/javafx-sdk-*`
 
 ## Future Improvements
 

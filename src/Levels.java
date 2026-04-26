@@ -3,7 +3,7 @@ import java.util.List;
 
 public final class Levels {
 
-    private static final String DAY_BACKGROUND = "/assets/battlezone.PNG";
+    private static final String DAY_BACKGROUND = "/assets/battlezone.png";
     private static final String NIGHT_BACKGROUND = "/assets/nightmade.png";
     private static final String GRAVE_1 = "/assets/grave1.png";
     private static final String GRAVE_2 = "/assets/grave2.png";

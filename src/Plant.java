@@ -42,14 +42,32 @@ public class Plant {
 
     }
     public void takeDamage(int damage) {
+        if (damage <= 0) {
+            return;
+        }
+
         health -= damage;
         System.out.println("Plant health: " + health);
     }
+
+    public void heal(int amount) {
+        if (amount <= 0 || !isAlive()) {
+            return;
+        }
+
+        health += amount;
+    }
+
     public int getHealth() {
         return health;
     }
+
+    public boolean isAlive() {
+        return health > 0;
+    }
+
     public boolean isDead() {
-        return health <= 0;
+        return !isAlive();
     }
     public ImageView getView() {
         return view;
@@ -149,31 +167,36 @@ public class Plant {
     public double getShootingInterval() {
         return shootingInterval;
     }
-    public void setShootingInterval(double shootingInterval) {
+    protected void setShootingInterval(double shootingInterval) {
         this.shootingInterval = shootingInterval;
     }
-    public void setHealth(int health) {
+
+    protected void setHealth(int health) {
         this.health = health;
     }
+
     public double getCooldown() {
         return cooldown;
     }
 
-    public void setCooldown(double cooldown) {
+    protected void setCooldown(double cooldown) {
         this.cooldown = cooldown;
     }
-    public void setPlantImage(Image image) {
+
+    protected void setPlantImage(Image image) {
         view.setViewport(null);
         view.setImage(image);
     }
-    public void setPlantImage(String imagePath) {
+
+    protected void setPlantImage(String imagePath) {
         setPlantImage(ImageAssets.load(imagePath));
     }
+
     public int getWaterCost() {
-    return waterCost;
+        return waterCost;
     }
 
-    public void setWaterCost(int waterCost) {
+    protected void setWaterCost(int waterCost) {
         this.waterCost = waterCost;
     }
 
