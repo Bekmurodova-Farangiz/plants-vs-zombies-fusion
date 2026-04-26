@@ -141,13 +141,32 @@ public class GameBoard extends Pane {
         zombiesPerWave = wave.getTotalZombies();
         spawnIntervalSeconds = wave.getSpawnInterval() * difficultySettings.getSpawnIntervalMultiplier();
     }
-    private void spawnZombie(Wave wave) {
+    // Overloading polymorphism: same method name, different parameter lists.
+    public Zombie spawnZombie() {
+        Wave wave = waves.get(currentWave - 1);
+        ZombieSpawnLocation spawnLocation = chooseZombieSpawnLocation();
+        return spawnZombie(wave.pickZombieType(), spawnLocation);
+    }
+
+    public Zombie spawnZombie(int row) {
+        Wave wave = waves.get(currentWave - 1);
+        return spawnZombie(wave.pickZombieType(), ZombieSpawnLocation.forEdge(normalizeRow(row)));
+    }
+
+    public Zombie spawnZombie(ZombieType type, int row) {
+        return spawnZombie(type, ZombieSpawnLocation.forEdge(normalizeRow(row)));
+    }
+
+    private Zombie spawnZombie(Wave wave) {
+        ZombieSpawnLocation spawnLocation = chooseZombieSpawnLocation();
+        return spawnZombie(wave.pickZombieType(), spawnLocation);
+    }
+
+    private Zombie spawnZombie(ZombieType zombieType, ZombieSpawnLocation spawnLocation) {
         if (isMatchEnded()) {
-            return;
+            return null;
         }
 
-        ZombieSpawnLocation spawnLocation = chooseZombieSpawnLocation();
-        ZombieType zombieType = wave.pickZombieType();
         Zombie zombie = ZombieFactory.createZombie(zombieType, spawnLocation.getRow());
         applyDifficultySettings(zombie);
 
@@ -157,6 +176,7 @@ public class GameBoard extends Pane {
         zombies.add(zombie);
         getChildren().add(zombie.getView());
         startGameLoop(zombie);
+        return zombie;
     }
     private void applyDifficultySettings(Zombie zombie) {
         zombie.applyStatMultipliers(
@@ -793,6 +813,27 @@ public class GameBoard extends Pane {
     public void setPlantRemovedHandler(Consumer<Plant> plantRemovedHandler) {
         this.plantRemovedHandler = plantRemovedHandler;
     }
+    // Overloading polymorphism: the board can place plants from enum or String input.
+    public Plant placePlant(PlantType type, int row, int col) {
+        return placePlant(type, row, col, false);
+    }
+
+    public Plant placePlant(String type, int row, int col) {
+        return placePlant(PlantType.fromIdentifier(type), row, col, false);
+    }
+
+    public Plant placePlant(PlantType type, int row, int col, boolean restorePreviousSelection) {
+        PlantType previousSelection = selectedPlantType;
+        setSelectedPlantType(type);
+        Plant placedPlant = placePlantAt(row, col);
+
+        if (restorePreviousSelection) {
+            setSelectedPlantType(previousSelection);
+        }
+
+        return placedPlant;
+    }
+
     public Plant placePlantAt(int row, int col) {
         if (!isRunning()) {
             return null;
@@ -1026,6 +1067,31 @@ public class GameBoard extends Pane {
         if (timeline != null) {
             timeline.stop();
         }
+    }
+
+    private int normalizeRow(int row) {
+        return Math.max(0, Math.min(ROWS - 1, row));
+    }
+
+    public List<Zombie> getZombiesSnapshot() {
+        return PolymorphismUtils.snapshotEntities(zombies);
+    }
+
+    public List<Plant> getPlantsSnapshot() {
+        return PolymorphismUtils.snapshotEntities(plants);
+    }
+
+    // Parametric polymorphism with an interface type: the same list abstraction stores Movable objects.
+    public List<Movable> getMovableEntities() {
+        List<Movable> movableEntities = new ArrayList<>();
+        movableEntities.addAll(zombies);
+        return movableEntities;
+    }
+
+    public void printEntityCollections() {
+        PolymorphismUtils.printEntities(getZombiesSnapshot());
+        PolymorphismUtils.printEntities(getPlantsSnapshot());
+        PolymorphismUtils.printEntities(getMovableEntities());
     }
 
     private ZombieSpawnLocation chooseZombieSpawnLocation() {

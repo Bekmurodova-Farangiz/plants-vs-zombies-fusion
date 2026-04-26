@@ -194,6 +194,8 @@ public abstract class Zombie implements Movable, Attackable {
     }
 
     public void applyStatMultipliers(double healthMultiplier, double speedMultiplier) {
+        // Coercion polymorphism: int health is widened to double during multiplication,
+        // then the scaled result is explicitly narrowed back to int for gameplay state.
         health = Math.max(1, (int) Math.round(health * healthMultiplier));
         speed = Math.max(0.1, speed * speedMultiplier);
     }
