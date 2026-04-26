@@ -5,10 +5,12 @@ import java.nio.file.Paths;
 import java.util.Map;
 import java.util.concurrent.ConcurrentHashMap;
 import javafx.scene.image.Image;
+import javafx.scene.image.WritableImage;
 
 public final class ImageAssets {
 
     private static final Map<String, Image> CACHE = new ConcurrentHashMap<>();
+    private static final Image FALLBACK_IMAGE = new WritableImage(1, 1);
 
     private ImageAssets() {
     }
@@ -54,10 +56,28 @@ public final class ImageAssets {
         }
 
         if (resourceUrl == null) {
-            throw new IllegalArgumentException("Missing image resource: " + resourcePath);
+            System.err.println("Missing image resource: " + resourcePath + ". Using fallback image.");
+            return FALLBACK_IMAGE;
         }
 
-        return new Image(resourceUrl.toExternalForm());
+        try {
+            Image image = new Image(resourceUrl.toExternalForm(), false);
+
+            if (image.isError()) {
+                Throwable cause = image.getException();
+                System.err.println(
+                        "Failed to load image resource: " + resourcePath
+                                + (cause != null ? " (" + cause.getMessage() + ")" : "")
+                                + ". Using fallback image."
+                );
+                return FALLBACK_IMAGE;
+            }
+
+            return image;
+        } catch (IllegalArgumentException exception) {
+            System.err.println("Invalid image path: " + resourcePath + ". Using fallback image.");
+            return FALLBACK_IMAGE;
+        }
     }
 
     private static URL findFileSystemResource(String resourcePath) {
@@ -75,7 +95,8 @@ public final class ImageAssets {
             if (Files.isRegularFile(candidate)) {
                 try {
                     return candidate.toUri().toURL();
-                } catch (Exception ignored) {
+                } catch (java.net.MalformedURLException | SecurityException exception) {
+                    System.err.println("Failed to resolve image file: " + candidate + ". " + exception.getMessage());
                     return null;
                 }
             }

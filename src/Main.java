@@ -3,7 +3,17 @@ import java.util.List;
 
 public class Main {
     public static void main(String[] args) {
-        GameApp.launch(GameApp.class, args);
+        try {
+            GameApp.launch(GameApp.class, args);
+        } catch (IllegalStateException exception) {
+            System.err.println("JavaFX launch failed because the application state was invalid.");
+            exception.printStackTrace();
+            throw exception;
+        } catch (RuntimeException exception) {
+            System.err.println("Unexpected JavaFX startup failure.");
+            exception.printStackTrace();
+            throw exception;
+        }
     }
 
     public static void demonstratePolymorphism(GameBoard board) {

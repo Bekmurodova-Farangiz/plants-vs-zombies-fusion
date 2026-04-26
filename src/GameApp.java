@@ -29,6 +29,7 @@ public class GameApp extends Application {
 
     @Override
     public void start(Stage stage) {
+        try {
         // Fixed "design size" of the whole game world.
         // Everything will be built for this size, then scaled together.
         final double DESIGN_WIDTH = 1600;
@@ -534,6 +535,15 @@ public class GameApp extends Application {
         stage.setFullScreen(true);//opens the game in fullscreen
         stage.setFullScreenExitHint(""); //removes the default JavaFX messag
         stage.show();
+        } catch (IllegalArgumentException exception) {
+            System.err.println("Game startup failed because a required configuration value was invalid.");
+            exception.printStackTrace();
+            throw exception;
+        } catch (RuntimeException exception) {
+            System.err.println("Game startup failed unexpectedly.");
+            exception.printStackTrace();
+            throw exception;
+        }
     }
 
     /**

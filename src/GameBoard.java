@@ -525,7 +525,10 @@ public class GameBoard extends Pane {
         System.out.println("Selected plant: " + type.getIdentifier());
     }
     public void setSelectedPlantType(String type) {
-        setSelectedPlantType(PlantType.fromIdentifier(type));
+        PlantType.tryFromIdentifier(type).ifPresentOrElse(
+                this::setSelectedPlantType,
+                () -> System.err.println("Unknown plant type selection '" + type + "'. Keeping current selection.")
+        );
     }
     public PlantType getSelectedPlantType() {
         return selectedPlantType;
@@ -540,7 +543,12 @@ public class GameBoard extends Pane {
         return currentTime < plantCooldowns.get(plantType);
     }
     public boolean isOnCooldown(String plantType) {
-        return isOnCooldown(PlantType.fromIdentifier(plantType));
+        return PlantType.tryFromIdentifier(plantType)
+                .map(this::isOnCooldown)
+                .orElseGet(() -> {
+                    System.err.println("Unknown plant type cooldown lookup '" + plantType + "'. Returning false.");
+                    return false;
+                });
     }
     public void addSunPoints(int amount) {
         if (isMatchEnded()) {
@@ -615,7 +623,12 @@ public class GameBoard extends Pane {
         return Math.max(0, remaining);
     }
     public long getRemainingCooldownMillis(String plantType) {
-        return getRemainingCooldownMillis(PlantType.fromIdentifier(plantType));
+        return PlantType.tryFromIdentifier(plantType)
+                .map(this::getRemainingCooldownMillis)
+                .orElseGet(() -> {
+                    System.err.println("Unknown plant type cooldown lookup '" + plantType + "'. Returning 0.");
+                    return 0L;
+                });
     }
     public boolean activateCageMode() {
         if (!isRunning() || getRemainingCageCooldownMillis() > 0) {
@@ -819,7 +832,12 @@ public class GameBoard extends Pane {
     }
 
     public Plant placePlant(String type, int row, int col) {
-        return placePlant(PlantType.fromIdentifier(type), row, col, false);
+        return PlantType.tryFromIdentifier(type)
+                .map(plantType -> placePlant(plantType, row, col, false))
+                .orElseGet(() -> {
+                    System.err.println("Unknown plant type '" + type + "'. Plant placement cancelled.");
+                    return null;
+                });
     }
 
     public Plant placePlant(PlantType type, int row, int col, boolean restorePreviousSelection) {

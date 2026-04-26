@@ -1,3 +1,5 @@
+import java.util.Optional;
+
 public enum PlantType {
     PEA_SHOOTER("PeaShooter", "Pea Shooter", 50, 20, 1.5, "/assets/peashooter.png"),
     WALL_PLANT("WallPlant", "Wall Plant", 50, 40, 3.0, "/assets/wallplant.png"),
@@ -46,12 +48,21 @@ public enum PlantType {
     }
 
     public static PlantType fromIdentifier(String identifier) {
+        return tryFromIdentifier(identifier)
+                .orElseThrow(() -> new IllegalArgumentException("Unknown plant type: " + identifier));
+    }
+
+    public static Optional<PlantType> tryFromIdentifier(String identifier) {
+        if (identifier == null || identifier.isBlank()) {
+            return Optional.empty();
+        }
+
         for (PlantType type : values()) {
             if (type.identifier.equalsIgnoreCase(identifier) || type.name().equalsIgnoreCase(identifier)) {
-                return type;
+                return Optional.of(type);
             }
         }
 
-        throw new IllegalArgumentException("Unknown plant type: " + identifier);
+        return Optional.empty();
     }
 }
