@@ -9,7 +9,7 @@ public class FastZombie extends Zombie {
 
     @Override
     public void act(GameBoard board) {
-        moveLeft();
+        move();
     }
 
     @Override

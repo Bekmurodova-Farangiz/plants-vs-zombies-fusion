@@ -3,7 +3,7 @@ import javafx.animation.Timeline;
 import javafx.scene.image.Image;
 import javafx.util.Duration;
 
-public class WaterPlant extends Plant {
+public class WaterPlant extends Plant implements ResourceProducer {
 
     private static final Image[] ANIMATION_FRAMES = ImageAssets.loadAll(
         "/assets/waterplant1.png",
@@ -40,7 +40,7 @@ public class WaterPlant extends Plant {
         stopTimeline(waterTimeline);
 
         waterTimeline = new Timeline(
-            new KeyFrame(PRODUCTION_CYCLE, e -> produceWater())
+            new KeyFrame(PRODUCTION_CYCLE, e -> produce(board))
         );
         waterTimeline.setCycleCount(Timeline.INDEFINITE);
         waterTimeline.playFromStart();
@@ -138,12 +138,17 @@ public class WaterPlant extends Plant {
         }
     }
 
-    private void produceWater() {
-        if (isDead() || isInfected() || board == null) {
+    @Override
+    public void produce(GameBoard board) {
+        if (board != null) {
+            this.board = board;
+        }
+
+        if (isDead() || isInfected() || this.board == null) {
             return;
         }
 
-        board.spawnWaterDropFromPlant(this);
+        this.board.spawnWaterDropFromPlant(this);
         System.out.println("WaterPlant produced water! +25");
     }
 

@@ -11,7 +11,7 @@ public class TankZombie extends Zombie {
 
     @Override
     public void act(GameBoard board) {
-        moveLeft();
+        move();
     }
 
     @Override

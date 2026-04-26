@@ -250,7 +250,7 @@ public class GameBoard extends Pane {
             return false;
         }
 
-        plant.takeDamage(zombie.getAttackDamage());
+        zombie.attack(plant);
         System.out.println("Zombie is attacking a plant!");
 
         if (plant.isDead()) {

@@ -4,7 +4,7 @@ import javafx.scene.image.Image;
 import javafx.scene.image.ImageView;
 import javafx.scene.layout.Pane;
 
-public abstract class Zombie {
+public abstract class Zombie implements Movable, Attackable {
 
     private static final Image DEFAULT_IMAGE = ImageAssets.load("/assets/zombie.png");
     private static final Image CAGE_IMAGE = ImageAssets.load("/assets/cage.png");
@@ -94,6 +94,12 @@ public abstract class Zombie {
     public boolean isDead() {
         return !isAlive();
     }
+
+    @Override
+    public void move() {
+        moveLeft();
+    }
+
     public void moveLeft() {
         if (!moving || isTrapped()) {
             return;
@@ -172,6 +178,15 @@ public abstract class Zombie {
     }
     public int getAttackDamage() {
         return attackDamage;
+    }
+
+    @Override
+    public void attack(Plant target) {
+        if (target == null || target.isInfected()) {
+            return;
+        }
+
+        target.takeDamage(getAttackDamage());
     }
 
     protected void setAttackDamage(int attackDamage) {

@@ -3,7 +3,7 @@ import javafx.animation.Timeline;
 import javafx.scene.image.Image;
 import javafx.util.Duration;
 
-public class Sunflower extends Plant {
+public class Sunflower extends Plant implements ResourceProducer {
 
     private static final Image[] ANIMATION_FRAMES = ImageAssets.loadAll(
         "/assets/sunplant_animation/sunflower1.png",
@@ -49,7 +49,7 @@ public class Sunflower extends Plant {
                     playProductionAnimation(board);
                 }
             }),
-            new KeyFrame(PRODUCTION_CYCLE, e -> produceSun())
+            new KeyFrame(PRODUCTION_CYCLE, e -> produce(board))
         );
 
         productionTimeline.setCycleCount(Timeline.INDEFINITE);
@@ -161,12 +161,17 @@ public class Sunflower extends Plant {
         board = null;
     }
 
-    private void produceSun() {
-        if (isDead() || isInfected() || board == null) {
+    @Override
+    public void produce(GameBoard board) {
+        if (board != null) {
+            this.board = board;
+        }
+
+        if (isDead() || isInfected() || this.board == null) {
             return;
         }
 
-        board.spawnSunFromPlant(this, getProductionAmount());
+        this.board.spawnSunFromPlant(this, getProductionAmount());
         resetToIdleFrame();
         System.out.println("Sunflower produced sun!");
     }
