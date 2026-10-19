@@ -28,11 +28,11 @@ public class GameBoard extends Pane {
     private final Level level;
     private final Difficulty difficulty;
     private final DifficultySettings difficultySettings;
-    private List<Plant> plants = new ArrayList<>();    //plants stores all plant objects on the board
-    private List<Zombie> zombies = new ArrayList<>(); //zombies stores all zombie objects on the board
-    private List<Bullet> bullets = new ArrayList<>();  //bullets added to the storage
-    private ArrayList<Sun> suns = new ArrayList<>();
-    private ArrayList<WaterDrop> waterDrops = new ArrayList<>();
+    private List<Plant> plants = new ArrayList<>();   
+    private List<Zombie> zombies = new ArrayList<>(); 
+    private List<Bullet> bullets = new ArrayList<>(); 
+    private List<Sun> suns = new ArrayList<>();
+    private List<WaterDrop> waterDrops = new ArrayList<>();
     private GameState gameState = GameState.RUNNING;
     private int sunPoints;
     private int waterPoints;
@@ -53,6 +53,7 @@ public class GameBoard extends Pane {
     private final List<Grave> graves = new ArrayList<>();
     private Consumer<Plant> plantRemovedHandler;
     private boolean cageModeActive;
+    private boolean disposed;
     private long cageCooldownEndMillis;
     
     //Constructor
@@ -262,23 +263,15 @@ public class GameBoard extends Pane {
         return false;
     }
     private boolean handlePlantCollision(Zombie zombie, Plant plant, Iterator<Plant> iterator) {
-        if (zombie instanceof ParasiteZombie) {
-            if (!plant.isInfected()) {
-                plant.infect();
-                System.out.println("Plant infected by parasite zombie!");
-            }
-            return false;
-        }
-
-        zombie.attack(plant);
-        System.out.println("Zombie is attacking a plant!");
+        // Dynamic dispatch: each zombie subclass decides what touching a plant means.
+        boolean blocked = zombie.onPlantContact(plant);
 
         if (plant.isDead()) {
             removePlant(plant, iterator);
             zombie.startMoving();
             System.out.println("Plant destroyed by zombie!");
         }
-        return true;
+        return blocked;
     }
     public void fireBulletFromPlant(Plant plant) {
         if (isMatchEnded() || plant == null || plant.isInfected()) {
@@ -711,17 +704,18 @@ public class GameBoard extends Pane {
                     return;
                 }
 
-                // Update bullets
+                // Update bullets: move them all, drop off-screen ones,
+                // then check hits once per tick.
                 for (int i = bullets.size() - 1; i >= 0; i--) {
                     Bullet bullet = bullets.get(i);
                     bullet.moveRight();
-                    checkBulletHits();
 
                     if (bullet.isOffScreen()) {
                         getChildren().remove(bullet.getView());
                         bullets.remove(i);
                     }
                 }
+                checkBulletHits();
 
                 // Update suns
                 for (int i = suns.size() - 1; i >= 0; i--) {
@@ -902,28 +896,11 @@ public class GameBoard extends Pane {
     }
 
     private Plant tryFusePlant(BoardCell cell) {
-        if (selectedPlantType == PlantType.SUNFLOWER) {
-            return tryFuseSunflower(cell);
-        }
-
-        if (selectedPlantType == PlantType.PEA_SHOOTER) {
-            return tryFusePeaShooter(cell);
-        }
-
-        return null;
-    }
-
-    private Plant tryFuseSunflower(BoardCell cell) {
         Plant occupant = cell.getOccupant();
 
-        if (!(occupant instanceof Sunflower)) {
-            return null;
-        }
-
-        Sunflower sunflower = (Sunflower) occupant;
-
-        if (!sunflower.canFuse()) {
-            System.out.println("Sunflower is already at maximum fusion level.");
+        // Polymorphism: the plant itself says whether it accepts this fusion.
+        if (!occupant.canFuseWith(selectedPlantType)) {
+            System.out.println("This plant cannot be fused with " + selectedPlantType.getIdentifier() + ".");
             return null;
         }
 
@@ -938,41 +915,10 @@ public class GameBoard extends Pane {
 
         consumeResourcesFor(selectedPlantType);
         applyCooldownFor(selectedPlantType);
-        sunflower.fuse();
+        occupant.fuse();
 
-        System.out.println("Fused Sunflower at row " + cell.getRow() + ", col " + cell.getCol());
-        return sunflower;
-    }
-
-    private Plant tryFusePeaShooter(BoardCell cell) {
-        Plant occupant = cell.getOccupant();
-
-        if (!(occupant instanceof PeaShooter)) {
-            return null;
-        }
-
-        PeaShooter peaShooter = (PeaShooter) occupant;
-
-        if (!peaShooter.canFuse()) {
-            System.out.println("PeaShooter is already at maximum fusion level.");
-            return null;
-        }
-
-        if (isOnCooldown(selectedPlantType)) {
-            System.out.println(selectedPlantType.getIdentifier() + " is on cooldown!");
-            return null;
-        }
-
-        if (!hasEnoughResources(selectedPlantType)) {
-            return null;
-        }
-
-        consumeResourcesFor(selectedPlantType);
-        applyCooldownFor(selectedPlantType);
-        peaShooter.fuse();
-
-        System.out.println("Fused PeaShooter at row " + cell.getRow() + ", col " + cell.getCol());
-        return peaShooter;
+        System.out.println("Fused " + selectedPlantType.getIdentifier() + " at row " + cell.getRow() + ", col " + cell.getCol());
+        return occupant;
     }
 
     private boolean hasEnoughResources(PlantType plantType) {
@@ -1073,12 +1019,26 @@ public class GameBoard extends Pane {
         }
     }
 
+    /**
+     * Stops every Timeline owned by this board (game loop, spawner,
+     * plants, zombies). Called when the player restarts or returns to the
+     * menu, so an old match never keeps running in the background.
+     */
+    public void dispose() {
+        if (disposed) {
+            return;
+        }
+
+        disposed = true;
+        stopAllGameplay();
+    }
+
     private boolean isMatchEnded() {
-        return gameState == GameState.WON || gameState == GameState.LOST;
+        return disposed || gameState == GameState.WON || gameState == GameState.LOST;
     }
 
     private boolean isRunning() {
-        return gameState == GameState.RUNNING;
+        return !disposed && gameState == GameState.RUNNING;
     }
 
     private void stopTimeline(Timeline timeline) {

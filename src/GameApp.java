@@ -449,61 +449,57 @@ public class GameApp extends Application {
                     resumeButton.setVisible(isPaused);
                     mainMenuButton.setVisible(!isLost && !isWon);
                 }
-                pauseButton.setOnAction(e -> {
-                    if (boardRef[0] != null && boardRef[0].getGameState() == GameState.RUNNING) {
-                        boardRef[0].pauseGame();
-                        pauseButton.setVisible(false);
-                        resumeButton.setVisible(true);
-                    }
-                });
-
-                resumeButton.setOnAction(e -> {
-                    if (boardRef[0] != null && boardRef[0].getGameState() == GameState.PAUSED) {
-                        boardRef[0].resumeGame();
-                        pauseButton.setVisible(true);
-                        resumeButton.setVisible(false);
-                    }
-                });
-                mainMenuButton.setOnAction(e -> {
-                    if (boardRef[0] != null) {
-                        boardRef[0] = null;
-                    }
-
-                    pauseButton.setVisible(true);
-                    resumeButton.setVisible(false);
-                    mainMenuButton.setVisible(true);
-                    gameOverOverlay.setVisible(false);
-                    gameOverOverlay.setMouseTransparent(true);
-
-                    showScreen(contentLayer, globalBg, menuBackgroundPath, menu);
-                });
-                winRestartButton.setOnAction(e -> {
-                    if (restartButton.getOnAction() != null) {
-                        restartButton.fire();
-                    }
-                });
-                winMenuButton.setOnAction(e -> {
-                    if (boardRef[0] != null) {
-                        boardRef[0] = null;
-                    }
-
-                    pauseButton.setVisible(true);
-                    resumeButton.setVisible(false);
-                    mainMenuButton.setVisible(true);
-                    winOverlay.setVisible(false);
-                    gameOverOverlay.setVisible(false);
-                    gameOverOverlay.setMouseTransparent(true);
-
-                    showScreen(contentLayer, globalBg, menuBackgroundPath, menu);
-                });
             }
         };
         timer.start();
 
-        gameOverMenuButton.setOnAction(e -> {
-            if (boardRef[0] != null) {
-                boardRef[0] = null;
+        // Button handlers are set ONCE here (they used to be re-assigned on every frame).
+        pauseButton.setOnAction(e -> {
+            if (boardRef[0] != null && boardRef[0].getGameState() == GameState.RUNNING) {
+                boardRef[0].pauseGame();
+                pauseButton.setVisible(false);
+                resumeButton.setVisible(true);
             }
+        });
+
+        resumeButton.setOnAction(e -> {
+            if (boardRef[0] != null && boardRef[0].getGameState() == GameState.PAUSED) {
+                boardRef[0].resumeGame();
+                pauseButton.setVisible(true);
+                resumeButton.setVisible(false);
+            }
+        });
+        mainMenuButton.setOnAction(e -> {
+            disposeCurrentBoard(boardRef);
+
+            pauseButton.setVisible(true);
+            resumeButton.setVisible(false);
+            mainMenuButton.setVisible(true);
+            gameOverOverlay.setVisible(false);
+            gameOverOverlay.setMouseTransparent(true);
+
+            showScreen(contentLayer, globalBg, menuBackgroundPath, menu);
+        });
+        winRestartButton.setOnAction(e -> {
+            if (restartButton.getOnAction() != null) {
+                restartButton.fire();
+            }
+        });
+        winMenuButton.setOnAction(e -> {
+            disposeCurrentBoard(boardRef);
+
+            pauseButton.setVisible(true);
+            resumeButton.setVisible(false);
+            mainMenuButton.setVisible(true);
+            winOverlay.setVisible(false);
+            gameOverOverlay.setVisible(false);
+            gameOverOverlay.setMouseTransparent(true);
+
+            showScreen(contentLayer, globalBg, menuBackgroundPath, menu);
+        });
+
+        gameOverMenuButton.setOnAction(e -> {
+            disposeCurrentBoard(boardRef);
 
             pauseButton.setVisible(true);
             resumeButton.setVisible(false);
@@ -643,6 +639,9 @@ public class GameApp extends Application {
             double designWidth,
             double designHeight
     ) {
+        // Stop the previous match before starting a new one (Restart).
+        disposeCurrentBoard(boardRef);
+
         Level level = Levels.create(levelType);
         LevelVisualTheme visualTheme = level.getVisualTheme();
         GameBoard board = new GameBoard(level, difficulty);
@@ -684,6 +683,13 @@ public class GameApp extends Application {
         );
 
         contentLayer.getChildren().setAll(gameLayout);
+    }
+
+    private void disposeCurrentBoard(GameBoard[] boardRef) {
+        if (boardRef[0] != null) {
+            boardRef[0].dispose();
+            boardRef[0] = null;
+        }
     }
 
     private Rectangle createBattlefieldTint(Level level, double width, double height) {

@@ -154,6 +154,17 @@ public abstract class Plant {
         stopShooting();
     }
 
+    /**
+     * Fusion hooks. By default a plant cannot be fused;
+     * fusable plants (PeaShooter, Sunflower) override these.
+     */
+    public boolean canFuseWith(PlantType type) {
+        return false;
+    }
+
+    public void fuse() {
+    }
+
     public abstract void act(GameBoard board);
 
     public abstract void specialAbility(GameBoard board);

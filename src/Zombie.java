@@ -189,6 +189,18 @@ public abstract class Zombie implements Movable, Attackable {
         target.takeDamage(getAttackDamage());
     }
 
+    /**
+     * Called by GameBoard when this zombie touches a plant.
+     * Each zombie type decides what contact means (polymorphism),
+     * so GameBoard never has to check the concrete zombie class.
+     *
+     * @return true if the zombie is blocked by the plant and stops moving
+     */
+    public boolean onPlantContact(Plant plant) {
+        attack(plant);
+        return true;
+    }
+
     protected void setAttackDamage(int attackDamage) {
         this.attackDamage = attackDamage;
     }

@@ -114,6 +114,12 @@ public class PeaShooter extends Plant {
         return fusionLevel < MAX_FUSION_LEVEL;
     }
 
+    @Override
+    public boolean canFuseWith(PlantType type) {
+        return type == PlantType.PEA_SHOOTER && canFuse();
+    }
+
+    @Override
     public void fuse() {
         if (!canFuse()) {
             return;

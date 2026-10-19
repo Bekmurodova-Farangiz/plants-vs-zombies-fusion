@@ -12,6 +12,16 @@ public class ParasiteZombie extends Zombie {
     }
 
     @Override
+    public boolean onPlantContact(Plant plant) {
+        // Parasites infect instead of eating, and walk past the plant.
+        if (!plant.isInfected()) {
+            plant.infect();
+            System.out.println("Plant infected by parasite zombie!");
+        }
+        return false;
+    }
+
+    @Override
     public void specialAbility(GameBoard board) {
         // Parasite zombies apply their special effect during plant collisions.
     }
