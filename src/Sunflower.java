@@ -208,6 +208,12 @@ public class Sunflower extends Plant implements ResourceProducer {
         return fusionLevel < MAX_FUSION_LEVEL;
     }
 
+    @Override
+    public boolean canFuseWith(PlantType type) {
+        return type == PlantType.SUNFLOWER && canFuse();
+    }
+
+    @Override
     public void fuse() {
         if (!canFuse()) {
             return;
