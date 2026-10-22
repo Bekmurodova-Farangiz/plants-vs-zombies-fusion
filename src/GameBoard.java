@@ -6,11 +6,8 @@ import javafx.util.Duration;
 // list of plants to GameBoard.
 import java.util.ArrayList;
 import java.util.Collections;
-import java.util.EnumMap;
 import java.util.Iterator;
 import java.util.List;
-import java.util.HashMap;
-import java.util.Map;
 import java.util.concurrent.ThreadLocalRandom;
 import java.util.function.Consumer;
 public class GameBoard extends Pane {
@@ -34,21 +31,13 @@ public class GameBoard extends Pane {
     private List<Sun> suns = new ArrayList<>();
     private List<WaterDrop> waterDrops = new ArrayList<>();
     private GameState gameState = GameState.RUNNING;
-    private int sunPoints;
-    private int waterPoints;
     private Timeline zombieSpawner;
     private Timeline waveStartDelayTimeline;
     private Timeline sunGenerator;
     private PlantType selectedPlantType = PlantType.PEA_SHOOTER;
-    private Map<PlantType, Long> plantCooldowns = new HashMap<>();
     private Timeline globalLoop;
-    private int currentWave = 1;
-    private int totalWaves;
-    private int zombiesSpawnedInWave = 0;
-    private int zombiesPerWave = 8;
-    private boolean waveInProgress = true;
-    private double spawnIntervalSeconds = 3.5;
-    private List<Wave> waves = new ArrayList<>();
+    private final ResourceManager resources;
+    private final WaveManager waveManager;
     private BoardCell[][] cells = new BoardCell[ROWS][COLUMNS];
     private final List<Grave> graves = new ArrayList<>();
     private Consumer<Plant> plantRemovedHandler;
@@ -69,16 +58,13 @@ public class GameBoard extends Pane {
         this.level = level;
         this.difficulty = difficulty != null ? difficulty : Difficulty.MEDIUM;
         this.difficultySettings = this.difficulty.getSettings();
-        sunPoints = difficultySettings.getStartingSun();
-        waterPoints = difficultySettings.getStartingWater();
+        resources = new ResourceManager(difficultySettings.getStartingSun(), difficultySettings.getStartingWater());
+        waveManager = new WaveManager(WaveManager.createDefaultWaves(), difficultySettings.getSpawnIntervalMultiplier());
         setPrefSize(COLUMNS * CELL_WIDTH, ROWS * CELL_HEIGHT);
         setPickOnBounds(false);
         initializeCells();
         initializeMatchGraves();
         applyLevelLayout();
-        initializeWaves();
-        totalWaves = waves.size();
-        configureWave(waves.get(0));
         scheduleCurrentWaveStart(INITIAL_PREPARATION_SECONDS, "Prepare your defenses before Wave 1.");
         startGlobalLoop();
     }
@@ -100,58 +86,14 @@ public class GameBoard extends Pane {
         graves.clear();
         graves.addAll(level.generateGravesForMatch());
     }
-    private void initializeWaves() {
-
-        // Wave 1 (easy)
-        waves.add(new Wave(
-            6,
-            4.5,
-            createZombieProbabilities(0.85, 0.15, 0.0, 0.0, 0.0)
-        ));
-
-        // Wave 2 (medium)
-        waves.add(new Wave(
-            10,
-            3.0,
-            createZombieProbabilities(0.45, 0.25, 0.20, 0.0, 0.10)
-        ));
-
-        // Wave 3 (hard)
-        waves.add(new Wave(
-            14,
-            2.2,
-            createZombieProbabilities(0.30, 0.20, 0.20, 0.15, 0.15)
-        ));
-    }
-    private Map<ZombieType, Double> createZombieProbabilities(
-            double normalChance,
-            double fastChance,
-            double fatChance,
-            double tankChance,
-            double parasiteChance
-    ) {
-        Map<ZombieType, Double> probabilities = new EnumMap<>(ZombieType.class);
-        probabilities.put(ZombieType.NORMAL, normalChance);
-        probabilities.put(ZombieType.FAST, fastChance);
-        probabilities.put(ZombieType.FAT, fatChance);
-        probabilities.put(ZombieType.TANK, tankChance);
-        probabilities.put(ZombieType.PARASITE, parasiteChance);
-        return probabilities;
-    }
-    private void configureWave(Wave wave) {
-        zombiesPerWave = wave.getTotalZombies();
-        spawnIntervalSeconds = wave.getSpawnInterval() * difficultySettings.getSpawnIntervalMultiplier();
-    }
     // Overloading polymorphism: same method name, different parameter lists.
     public Zombie spawnZombie() {
-        Wave wave = waves.get(currentWave - 1);
         ZombieSpawnLocation spawnLocation = chooseZombieSpawnLocation();
-        return spawnZombie(wave.pickZombieType(), spawnLocation);
+        return spawnZombie(waveManager.pickZombieType(), spawnLocation);
     }
 
     public Zombie spawnZombie(int row) {
-        Wave wave = waves.get(currentWave - 1);
-        return spawnZombie(wave.pickZombieType(), ZombieSpawnLocation.forEdge(normalizeRow(row)));
+        return spawnZombie(waveManager.pickZombieType(), ZombieSpawnLocation.forEdge(normalizeRow(row)));
     }
 
     public Zombie spawnZombie(ZombieType type, int row) {
@@ -190,28 +132,28 @@ public class GameBoard extends Pane {
             return;
         }
 
-        if (zombiesSpawnedInWave >= zombiesPerWave) {
+        if (!waveManager.hasMoreZombiesToSpawn()) {
             finishWaveSpawning();
             return;
         }
 
-        Wave wave = waves.get(currentWave - 1);
-        spawnZombie(wave);
-        zombiesSpawnedInWave++;
-        System.out.println("Zombie spawned in wave " + currentWave + ": " + zombiesSpawnedInWave + "/" + zombiesPerWave);
+        spawnZombie(waveManager.getCurrentWaveDefinition());
+        waveManager.recordSpawn();
+        System.out.println("Zombie spawned in wave " + waveManager.getCurrentWave() + ": "
+                + waveManager.getZombiesSpawnedInWave() + "/" + waveManager.getZombiesPerWave());
 
-        if (zombiesSpawnedInWave >= zombiesPerWave) {
+        if (!waveManager.hasMoreZombiesToSpawn()) {
             finishWaveSpawning();
         }
     }
     private void finishWaveSpawning() {
-        waveInProgress = false;
+        waveManager.finishSpawning();
 
         if (zombieSpawner != null) {
             zombieSpawner.stop();
         }
 
-        System.out.println("Wave " + currentWave + " spawn completed.");
+        System.out.println("Wave " + waveManager.getCurrentWave() + " spawn completed.");
     }
     public void startGameLoop(Zombie zombie) {
         Timeline timeline = new Timeline(
@@ -250,12 +192,7 @@ public class GameBoard extends Pane {
         while (iterator.hasNext()) {
             Plant plant = iterator.next();
 
-            if (!plant.blocksZombies()) {
-                continue;
-            }
-
-            if (zombie.getBodyView().localToScene(zombie.getBodyView().getBoundsInLocal())
-                    .intersects(plant.getView().localToScene(plant.getView().getBoundsInLocal()))) {
+            if (CollisionSystem.zombieTouchesPlant(zombie, plant)) {
                 return handlePlantCollision(zombie, plant, iterator);
             }
         }
@@ -330,8 +267,7 @@ public class GameBoard extends Pane {
             for (int j = zombies.size() - 1; j >= 0; j--) { //We also loop through zombies.
                 Zombie zombie = zombies.get(j);
 
-                if (bullet.getView().localToScene(bullet.getView().getBoundsInLocal())
-                        .intersects(zombie.getBodyView().localToScene(zombie.getBodyView().getBoundsInLocal()))) { //Checks whether bullet and zombie overlap visually.
+                if (CollisionSystem.bulletHitsZombie(bullet, zombie)) {
                     zombie.takeDamage(bullet.getDamage());
 
                     getChildren().remove(bullet.getView());
@@ -354,7 +290,7 @@ public class GameBoard extends Pane {
     public void damageZombiesInArea(int centerRow, int centerCol, BlastArea blastArea, int damage) {
         for (int i = zombies.size() - 1; i >= 0; i--) {
             Zombie zombie = zombies.get(i);
-            int zombieCol = getZombieColumn(zombie);
+            int zombieCol = CollisionSystem.columnOf(zombie);
 
             if (!blastArea.contains(centerRow, centerCol, zombie.getRow(), zombieCol)) {
                 continue;
@@ -368,12 +304,6 @@ public class GameBoard extends Pane {
         }
     }
 
-    private int getZombieColumn(Zombie zombie) {
-        double zombieWidth = zombie.getVisualWidth();
-        double zombieCenterX = zombie.getView().getTranslateX() + (zombieWidth / 2.0);
-        return (int) Math.floor(zombieCenterX / CELL_WIDTH);
-    }
-
     private void removeZombieAt(int zombieIndex) {
         Zombie zombie = zombies.get(zombieIndex);
         zombie.stopAllActions();
@@ -383,7 +313,7 @@ public class GameBoard extends Pane {
     }
     private void scheduleCurrentWaveStart(double delaySeconds, String announcement) {
         stopWaveStartDelay();
-        waveInProgress = true;
+        waveManager.markWaveInProgress();
 
         if (announcement != null && !announcement.isEmpty()) {
             System.out.println(announcement);
@@ -404,7 +334,7 @@ public class GameBoard extends Pane {
             return;
         }
 
-        System.out.println("Starting wave " + currentWave);
+        System.out.println("Starting wave " + waveManager.getCurrentWave());
         startZombieSpawner();
     }
 
@@ -420,22 +350,22 @@ public class GameBoard extends Pane {
             zombieSpawner.stop();
         }
 
-        if (!waveInProgress || zombiesSpawnedInWave >= zombiesPerWave) {
+        if (!waveManager.isWaveInProgress() || !waveManager.hasMoreZombiesToSpawn()) {
             return;
         }
 
         spawnNextZombieInWave();
 
-        if (!waveInProgress) {
+        if (!waveManager.isWaveInProgress()) {
             return;
         }
 
         zombieSpawner = new Timeline(
-            new KeyFrame(Duration.seconds(spawnIntervalSeconds), e -> {
+            new KeyFrame(Duration.seconds(waveManager.getSpawnIntervalSeconds()), e -> {
                 if (!isRunning()) {
                     return;
                 }
-                if (!waveInProgress) {
+                if (!waveManager.isWaveInProgress()) {
                     return;
                 }
 
@@ -473,8 +403,8 @@ public class GameBoard extends Pane {
                     return;
                 }
 
-                sunPoints += 25;
-                System.out.println("Sun points: " + sunPoints);
+                resources.addSun(25);
+                System.out.println("Sun points: " + resources.getSunPoints());
             })
         );
 
@@ -482,7 +412,7 @@ public class GameBoard extends Pane {
         sunGenerator.play();
     }
     public int getSunPoints() {
-        return sunPoints;
+        return resources.getSunPoints();
     }
 
     public Level getLevel() {
@@ -527,13 +457,7 @@ public class GameBoard extends Pane {
         return selectedPlantType;
     }
     public boolean isOnCooldown(PlantType plantType) {
-        long currentTime = System.currentTimeMillis();
-
-        if (!plantCooldowns.containsKey(plantType)) {
-            return false;
-        }
-
-        return currentTime < plantCooldowns.get(plantType);
+        return resources.isOnCooldown(plantType);
     }
     public boolean isOnCooldown(String plantType) {
         return PlantType.tryFromIdentifier(plantType)
@@ -548,8 +472,8 @@ public class GameBoard extends Pane {
             return;
         }
 
-        sunPoints += amount;
-        System.out.println("Sun points: " + sunPoints);
+        resources.addSun(amount);
+        System.out.println("Sun points: " + resources.getSunPoints());
     }
     public void spawnSunFromPlant(Plant plant) {
         spawnSunFromPlant(plant, 25);
@@ -572,15 +496,15 @@ public class GameBoard extends Pane {
         getChildren().add(sun.getView());
     }
     public int getWaterPoints() {
-        return waterPoints;
+        return resources.getWaterPoints();
     }
     public void addWaterPoints(int amount) {
         if (isMatchEnded()) {
             return;
         }
 
-        waterPoints += amount;
-        System.out.println("Water points: " + waterPoints);
+        resources.addWater(amount);
+        System.out.println("Water points: " + resources.getWaterPoints());
     }
     public void spawnWaterDropFromPlant(Plant plant) {
         if (isMatchEnded() || plant == null || plant.isInfected()) {
@@ -608,12 +532,7 @@ public class GameBoard extends Pane {
         getChildren().add(drop.getView());
     }
     public long getRemainingCooldownMillis(PlantType plantType) {
-        if (!plantCooldowns.containsKey(plantType)) {
-            return 0;
-        }
-
-        long remaining = plantCooldowns.get(plantType) - System.currentTimeMillis();
-        return Math.max(0, remaining);
+        return resources.getRemainingCooldownMillis(plantType);
     }
     public long getRemainingCooldownMillis(String plantType) {
         return PlantType.tryFromIdentifier(plantType)
@@ -658,43 +577,36 @@ public class GameBoard extends Pane {
             return false;
         }
 
-        sunPoints -= CAGE_SUN_COST;
-        waterPoints -= CAGE_WATER_COST;
+        resources.spend(CAGE_SUN_COST, CAGE_WATER_COST);
         zombie.trapForSeconds(CAGE_TRAP_DURATION_SECONDS);
         cageModeActive = false;
         cageCooldownEndMillis = System.currentTimeMillis() + CAGE_COOLDOWN_MILLIS;
         return true;
     }
     public boolean isWaveCleared() {
-        return !waveInProgress && zombies.isEmpty();
+        return !waveManager.isWaveInProgress() && zombies.isEmpty();
     }
     public void startNextWave() {
-        if (currentWave >= totalWaves) {
+        if (waveManager.isLastWave()) {
             endGameAsWon();
             System.out.println("All waves completed! YOU WON!");
             return;
         }
 
-        currentWave++;
-        zombiesSpawnedInWave = 0;
+        waveManager.advanceToNextWave();
 
-        Wave wave = waves.get(currentWave - 1);
-        configureWave(wave);
-
-        scheduleCurrentWaveStart(BETWEEN_WAVES_BREAK_SECONDS, "Wave " + currentWave + " will start soon...");
+        scheduleCurrentWaveStart(BETWEEN_WAVES_BREAK_SECONDS, "Wave " + waveManager.getCurrentWave() + " will start soon...");
     }
     public int getCurrentWave() {
-        return currentWave;
+        return waveManager.getCurrentWave();
     }
 
     public int getTotalWaves() {
-        return totalWaves;
+        return waveManager.getTotalWaves();
     }
 
     public double getWaveProgress() {
-        double completedWaves = currentWave - 1;
-        double currentWavePart = (double) zombiesSpawnedInWave / zombiesPerWave;
-        return (completedWaves + currentWavePart) / totalWaves;
+        return waveManager.getProgress();
     }
     public void startGlobalLoop() {
         globalLoop = new Timeline(
@@ -796,7 +708,7 @@ public class GameBoard extends Pane {
             globalLoop.play();
         }
 
-        if (zombieSpawner != null && waveInProgress) {
+        if (zombieSpawner != null && waveManager.isWaveInProgress()) {
             zombieSpawner.play();
         }
 
@@ -922,7 +834,7 @@ public class GameBoard extends Pane {
     }
 
     private boolean hasEnoughResources(PlantType plantType) {
-        if (sunPoints < plantType.getSunCost() || waterPoints < plantType.getWaterCost()) {
+        if (!resources.canAfford(plantType)) {
             System.out.println("Not enough resources!");
             return false;
         }
@@ -931,7 +843,7 @@ public class GameBoard extends Pane {
     }
 
     private boolean hasEnoughResources(int sunCost, int waterCost) {
-        if (sunPoints < sunCost || waterPoints < waterCost) {
+        if (!resources.canAfford(sunCost, waterCost)) {
             System.out.println("Not enough resources!");
             return false;
         }
@@ -940,15 +852,11 @@ public class GameBoard extends Pane {
     }
 
     private void consumeResourcesFor(PlantType plantType) {
-        sunPoints -= plantType.getSunCost();
-        waterPoints -= plantType.getWaterCost();
+        resources.spendFor(plantType);
     }
 
     private void applyCooldownFor(PlantType plantType) {
-        plantCooldowns.put(
-                plantType,
-                System.currentTimeMillis() + (long) (plantType.getCooldown() * 1000)
-        );
+        resources.startCooldown(plantType);
     }
 
     public void removePlant(Plant plant) {
@@ -997,7 +905,7 @@ public class GameBoard extends Pane {
     }
 
     private void stopAllGameplay() {
-        waveInProgress = false;
+        waveManager.finishSpawning();
         cageModeActive = false;
 
         stopTimeline(globalLoop);
@@ -1081,7 +989,7 @@ public class GameBoard extends Pane {
     }
 
     private boolean shouldSpawnFromGrave() {
-        double spawnChance = level.getGraveZombieSpawnChance(currentWave);
+        double spawnChance = level.getGraveZombieSpawnChance(waveManager.getCurrentWave());
 
         if (spawnChance <= 0.0) {
             return false;
