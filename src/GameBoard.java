@@ -18,10 +18,6 @@ public class GameBoard extends Pane {
     private static final int CELL_HEIGHT = BoardMetrics.CELL_HEIGHT;
     private static final double INITIAL_PREPARATION_SECONDS = 12.0;
     private static final double BETWEEN_WAVES_BREAK_SECONDS = 5.0;
-    private static final double CAGE_TRAP_DURATION_SECONDS = 10.0;
-    private static final long CAGE_COOLDOWN_MILLIS = 8_000L;
-    private static final int CAGE_SUN_COST = 50;
-    private static final int CAGE_WATER_COST = 50;
     private final Level level;
     private final Difficulty difficulty;
     private final DifficultySettings difficultySettings;
@@ -31,19 +27,15 @@ public class GameBoard extends Pane {
     private List<Sun> suns = new ArrayList<>();
     private List<WaterDrop> waterDrops = new ArrayList<>();
     private GameState gameState = GameState.RUNNING;
-    private Timeline zombieSpawner;
-    private Timeline waveStartDelayTimeline;
-    private Timeline sunGenerator;
     private PlantType selectedPlantType = PlantType.PEA_SHOOTER;
-    private Timeline globalLoop;
+    private final MatchTimers timers = new MatchTimers();
+    private final CageAbility cage = new CageAbility();
     private final ResourceManager resources;
     private final WaveManager waveManager;
     private BoardCell[][] cells = new BoardCell[ROWS][COLUMNS];
     private final List<Grave> graves = new ArrayList<>();
     private Consumer<Plant> plantRemovedHandler;
-    private boolean cageModeActive;
     private boolean disposed;
-    private long cageCooldownEndMillis;
     
     //Constructor
     public GameBoard() {
@@ -148,10 +140,7 @@ public class GameBoard extends Pane {
     }
     private void finishWaveSpawning() {
         waveManager.finishSpawning();
-
-        if (zombieSpawner != null) {
-            zombieSpawner.stop();
-        }
+        timers.stopSpawner();
 
         System.out.println("Wave " + waveManager.getCurrentWave() + " spawn completed.");
     }
@@ -319,14 +308,7 @@ public class GameBoard extends Pane {
             System.out.println(announcement);
         }
 
-        waveStartDelayTimeline = new Timeline(
-            new KeyFrame(Duration.seconds(delaySeconds), e -> {
-                waveStartDelayTimeline = null;
-                beginCurrentWave();
-            })
-        );
-        waveStartDelayTimeline.setCycleCount(1);
-        waveStartDelayTimeline.play();
+        timers.scheduleWaveStart(delaySeconds, this::beginCurrentWave);
     }
 
     private void beginCurrentWave() {
@@ -339,16 +321,11 @@ public class GameBoard extends Pane {
     }
 
     private void stopWaveStartDelay() {
-        if (waveStartDelayTimeline != null) {
-            waveStartDelayTimeline.stop();
-            waveStartDelayTimeline = null;
-        }
+        timers.stopWaveStartDelay();
     }
 
     public void startZombieSpawner() {
-        if (zombieSpawner != null) {
-            zombieSpawner.stop();
-        }
+        timers.stopSpawner();
 
         if (!waveManager.isWaveInProgress() || !waveManager.hasMoreZombiesToSpawn()) {
             return;
@@ -360,21 +337,16 @@ public class GameBoard extends Pane {
             return;
         }
 
-        zombieSpawner = new Timeline(
-            new KeyFrame(Duration.seconds(waveManager.getSpawnIntervalSeconds()), e -> {
-                if (!isRunning()) {
-                    return;
-                }
-                if (!waveManager.isWaveInProgress()) {
-                    return;
-                }
+        timers.startSpawner(waveManager.getSpawnIntervalSeconds(), () -> {
+            if (!isRunning()) {
+                return;
+            }
+            if (!waveManager.isWaveInProgress()) {
+                return;
+            }
 
-                spawnNextZombieInWave();
-            })
-        );
-
-        zombieSpawner.setCycleCount(Timeline.INDEFINITE);
-        zombieSpawner.play();
+            spawnNextZombieInWave();
+        });
     }
     public boolean hasZombieInLane(int row) {
         for (Zombie zombie : zombies) {
@@ -397,19 +369,14 @@ public class GameBoard extends Pane {
             return;
         }
 
-        sunGenerator = new Timeline(
-            new KeyFrame(Duration.seconds(5), e -> {
-                if (isMatchEnded()) {
-                    return;
-                }
+        timers.startSunGenerator(5, () -> {
+            if (isMatchEnded()) {
+                return;
+            }
 
-                resources.addSun(25);
-                System.out.println("Sun points: " + resources.getSunPoints());
-            })
-        );
-
-        sunGenerator.setCycleCount(Timeline.INDEFINITE);
-        sunGenerator.play();
+            resources.addSun(25);
+            System.out.println("Sun points: " + resources.getSunPoints());
+        });
     }
     public int getSunPoints() {
         return resources.getSunPoints();
@@ -543,44 +510,42 @@ public class GameBoard extends Pane {
                 });
     }
     public boolean activateCageMode() {
-        if (!isRunning() || getRemainingCageCooldownMillis() > 0) {
+        if (!isRunning() || !cage.isReady()) {
             return false;
         }
 
-        if (!hasEnoughResources(CAGE_SUN_COST, CAGE_WATER_COST)) {
+        if (!hasEnoughResources(CageAbility.SUN_COST, CageAbility.WATER_COST)) {
             return false;
         }
 
-        cageModeActive = true;
+        cage.activate();
         return true;
     }
 
     public void deactivateCageMode() {
-        cageModeActive = false;
+        cage.deactivate();
     }
 
     public boolean isCageModeActive() {
-        return cageModeActive;
+        return cage.isActive();
     }
 
     public long getRemainingCageCooldownMillis() {
-        return Math.max(0, cageCooldownEndMillis - System.currentTimeMillis());
+        return cage.getRemainingCooldownMillis();
     }
 
     public boolean tryUseCageOnZombie(Zombie zombie) {
-        if (!cageModeActive || zombie == null || zombie.isDead() || !zombies.contains(zombie)) {
+        if (!cage.isActive() || zombie == null || zombie.isDead() || !zombies.contains(zombie)) {
             return false;
         }
 
-        if (!hasEnoughResources(CAGE_SUN_COST, CAGE_WATER_COST)) {
-            cageModeActive = false;
+        if (!hasEnoughResources(CageAbility.SUN_COST, CageAbility.WATER_COST)) {
+            cage.deactivate();
             return false;
         }
 
-        resources.spend(CAGE_SUN_COST, CAGE_WATER_COST);
-        zombie.trapForSeconds(CAGE_TRAP_DURATION_SECONDS);
-        cageModeActive = false;
-        cageCooldownEndMillis = System.currentTimeMillis() + CAGE_COOLDOWN_MILLIS;
+        resources.spend(CageAbility.SUN_COST, CageAbility.WATER_COST);
+        cage.trap(zombie);
         return true;
     }
     public boolean isWaveCleared() {
@@ -609,60 +574,57 @@ public class GameBoard extends Pane {
         return waveManager.getProgress();
     }
     public void startGlobalLoop() {
-        globalLoop = new Timeline(
-            new KeyFrame(Duration.millis(50), e -> {
+        timers.startGameLoop(this::updateFrame);
+    }
 
-                if (!isRunning()) {
-                    return;
-                }
+    /** One 50 ms tick: move bullets, suns and water drops, then check the wave. */
+    private void updateFrame() {
+        if (!isRunning()) {
+            return;
+        }
 
-                // Update bullets: move them all, drop off-screen ones,
-                // then check hits once per tick.
-                for (int i = bullets.size() - 1; i >= 0; i--) {
-                    Bullet bullet = bullets.get(i);
-                    bullet.moveRight();
+        // Update bullets: move them all, drop off-screen ones,
+        // then check hits once per tick.
+        for (int i = bullets.size() - 1; i >= 0; i--) {
+            Bullet bullet = bullets.get(i);
+            bullet.moveRight();
 
-                    if (bullet.isOffScreen()) {
-                        getChildren().remove(bullet.getView());
-                        bullets.remove(i);
-                    }
-                }
-                checkBulletHits();
+            if (bullet.isOffScreen()) {
+                getChildren().remove(bullet.getView());
+                bullets.remove(i);
+            }
+        }
+        checkBulletHits();
 
-                // Update suns
-                for (int i = suns.size() - 1; i >= 0; i--) {
-                    Sun sun = suns.get(i);
+        // Update suns
+        for (int i = suns.size() - 1; i >= 0; i--) {
+            Sun sun = suns.get(i);
 
-                    sun.update();
+            sun.update();
 
-                    if (sun.hasReachedTarget()) {
-                        addSunPoints(sun.getValue());
-                        getChildren().remove(sun.getView());
-                        suns.remove(i);
-                    }
-                }
+            if (sun.hasReachedTarget()) {
+                addSunPoints(sun.getValue());
+                getChildren().remove(sun.getView());
+                suns.remove(i);
+            }
+        }
 
-                // Update water drops
-                for (int i = waterDrops.size() - 1; i >= 0; i--) {
-                    WaterDrop drop = waterDrops.get(i);
+        // Update water drops
+        for (int i = waterDrops.size() - 1; i >= 0; i--) {
+            WaterDrop drop = waterDrops.get(i);
 
-                    drop.update();
+            drop.update();
 
-                    if (drop.isFinished()) {
-                        getChildren().remove(drop.getView());
-                        waterDrops.remove(i);
-                    }
-                }
+            if (drop.isFinished()) {
+                getChildren().remove(drop.getView());
+                waterDrops.remove(i);
+            }
+        }
 
-                // Check if wave ended and next wave should start
-                if (isWaveCleared()) {
-                    startNextWave();
-                }
-            })
-        );
-
-        globalLoop.setCycleCount(Timeline.INDEFINITE);
-        globalLoop.play();
+        // Check if wave ended and next wave should start
+        if (isWaveCleared()) {
+            startNextWave();
+        }
     }
 
     public boolean isPaused() {
@@ -676,17 +638,7 @@ public class GameBoard extends Pane {
 
         gameState = GameState.PAUSED;
 
-        if (globalLoop != null) {
-            globalLoop.pause();
-        }
-
-        if (zombieSpawner != null) {
-            zombieSpawner.pause();
-        }
-
-        if (waveStartDelayTimeline != null) {
-            waveStartDelayTimeline.pause();
-        }
+        timers.pauseAll();
 
         for (Plant plant : plants) {
             plant.stopShooting();
@@ -704,17 +656,7 @@ public class GameBoard extends Pane {
 
         gameState = GameState.RUNNING;
 
-        if (globalLoop != null) {
-            globalLoop.play();
-        }
-
-        if (zombieSpawner != null && waveManager.isWaveInProgress()) {
-            zombieSpawner.play();
-        }
-
-        if (waveStartDelayTimeline != null) {
-            waveStartDelayTimeline.play();
-        }
+        timers.resumeAll(waveManager.isWaveInProgress());
 
         for (Plant plant : plants) {
             startShooting(plant);
@@ -763,7 +705,7 @@ public class GameBoard extends Pane {
             return null;
         }
 
-        if (cageModeActive) {
+        if (cage.isActive()) {
             return null;
         }
 
@@ -906,12 +848,8 @@ public class GameBoard extends Pane {
 
     private void stopAllGameplay() {
         waveManager.finishSpawning();
-        cageModeActive = false;
-
-        stopTimeline(globalLoop);
-        stopTimeline(zombieSpawner);
-        stopWaveStartDelay();
-        stopTimeline(sunGenerator);
+        cage.deactivate();
+        timers.stopAll();
 
         for (Plant plant : plants) {
             plant.onGameEnded();
@@ -947,12 +885,6 @@ public class GameBoard extends Pane {
 
     private boolean isRunning() {
         return !disposed && gameState == GameState.RUNNING;
-    }
-
-    private void stopTimeline(Timeline timeline) {
-        if (timeline != null) {
-            timeline.stop();
-        }
     }
 
     private int normalizeRow(int row) {

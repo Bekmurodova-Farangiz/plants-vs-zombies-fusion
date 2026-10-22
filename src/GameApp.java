@@ -24,8 +24,6 @@ public class GameApp extends Application {
 
     private static final String CAGE_CARD_ID = "CageAbility";
     private static final String CAGE_IMAGE_PATH = "/assets/cage.png";
-    private static final int CAGE_SUN_COST = 50;
-    private static final int CAGE_WATER_COST = 50;
 
     @Override
     public void start(Stage stage) {
@@ -209,8 +207,8 @@ public class GameApp extends Application {
         PlantCard cageCard = new PlantCard(
                 CAGE_CARD_ID,
                 CAGE_IMAGE_PATH,
-                CAGE_SUN_COST,
-                CAGE_WATER_COST
+                CageAbility.SUN_COST,
+                CageAbility.WATER_COST
         );
 
         // Default selected style
