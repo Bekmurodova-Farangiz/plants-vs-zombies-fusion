@@ -36,6 +36,6 @@ public class Bullet {
     }
 
     public boolean isOffScreen() {
-        return view.getTranslateX() > 1462;
+        return view.getTranslateX() > BoardMetrics.BULLET_DESPAWN_X;
     }
 }
