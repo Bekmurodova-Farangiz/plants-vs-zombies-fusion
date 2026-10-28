@@ -173,7 +173,7 @@ public class Sunflower extends Plant implements ResourceProducer {
 
         this.board.spawnSunFromPlant(this, getProductionAmount());
         resetToIdleFrame();
-        System.out.println("Sunflower produced sun!");
+        GameLogger.info("Sunflower produced sun!");
     }
 
     private void applyAnimationFrame(int frameIndex) {
