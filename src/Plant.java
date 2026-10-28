@@ -47,7 +47,7 @@ public abstract class Plant {
         }
 
         health -= damage;
-        System.out.println("Plant health: " + health);
+        GameLogger.info("Plant health: " + health);
     }
 
     public void heal(int amount) {
