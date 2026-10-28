@@ -149,7 +149,7 @@ public class WaterPlant extends Plant implements ResourceProducer {
         }
 
         this.board.spawnWaterDropFromPlant(this);
-        System.out.println("WaterPlant produced water! +25");
+        GameLogger.info("WaterPlant produced water! +25");
     }
 
     private void advanceAnimationFrame() {
