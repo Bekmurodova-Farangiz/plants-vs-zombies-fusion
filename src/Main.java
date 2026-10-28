@@ -6,12 +6,10 @@ public class Main {
         try {
             GameApp.launch(GameApp.class, args);
         } catch (IllegalStateException exception) {
-            System.err.println("JavaFX launch failed because the application state was invalid.");
-            exception.printStackTrace();
+            GameLogger.error("JavaFX launch failed because the application state was invalid.", exception);
             throw exception;
         } catch (RuntimeException exception) {
-            System.err.println("Unexpected JavaFX startup failure.");
-            exception.printStackTrace();
+            GameLogger.error("Unexpected JavaFX startup failure.", exception);
             throw exception;
         }
     }
