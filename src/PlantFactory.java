@@ -51,7 +51,7 @@ public final class PlantFactory {
 
         if (type == PlantType.PEA_SHOOTER && !PlantType.PEA_SHOOTER.getIdentifier().equalsIgnoreCase(identifier)
                 && !PlantType.PEA_SHOOTER.name().equalsIgnoreCase(identifier)) {
-            System.err.println("Unknown plant type '" + identifier + "'. Falling back to PeaShooter.");
+            GameLogger.error("Unknown plant type '" + identifier + "'. Falling back to PeaShooter.");
         }
 
         return createPlant(type, row, col, board);
