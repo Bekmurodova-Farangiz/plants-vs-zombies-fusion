@@ -16,7 +16,7 @@ public class ParasiteZombie extends Zombie {
         // Parasites infect instead of eating, and walk past the plant.
         if (!plant.isInfected()) {
             plant.infect();
-            System.out.println("Plant infected by parasite zombie!");
+            GameLogger.info("Plant infected by parasite zombie!");
         }
         return false;
     }
