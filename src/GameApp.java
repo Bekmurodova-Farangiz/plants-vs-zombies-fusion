@@ -530,12 +530,10 @@ public class GameApp extends Application {
         stage.setFullScreenExitHint(""); //removes the default JavaFX messag
         stage.show();
         } catch (IllegalArgumentException exception) {
-            System.err.println("Game startup failed because a required configuration value was invalid.");
-            exception.printStackTrace();
+            GameLogger.error("Game startup failed because a required configuration value was invalid.", exception);
             throw exception;
         } catch (RuntimeException exception) {
-            System.err.println("Game startup failed unexpectedly.");
-            exception.printStackTrace();
+            GameLogger.error("Game startup failed unexpectedly.", exception);
             throw exception;
         }
     }

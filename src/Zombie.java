@@ -72,7 +72,7 @@ public abstract class Zombie implements Movable, Attackable {
         }
 
         health -= damage;
-        System.out.println("Zombie health: " + health);
+        GameLogger.info("Zombie health: " + health);
     }
 
     public void heal(int amount) {

@@ -46,7 +46,7 @@ public final class ZombieFactory {
         ZombieType type = ZombieType.tryFromIdentifier(identifier).orElse(ZombieType.NORMAL);
 
         if (type == ZombieType.NORMAL && !ZombieType.NORMAL.name().equalsIgnoreCase(identifier)) {
-            System.err.println("Unknown zombie type '" + identifier + "'. Falling back to NORMAL.");
+            GameLogger.error("Unknown zombie type '" + identifier + "'. Falling back to NORMAL.");
         }
 
         return createZombie(type, row);

@@ -56,7 +56,7 @@ public final class ImageAssets {
         }
 
         if (resourceUrl == null) {
-            System.err.println("Missing image resource: " + resourcePath + ". Using fallback image.");
+            GameLogger.error("Missing image resource: " + resourcePath + ". Using fallback image.");
             return FALLBACK_IMAGE;
         }
 
@@ -65,7 +65,7 @@ public final class ImageAssets {
 
             if (image.isError()) {
                 Throwable cause = image.getException();
-                System.err.println(
+                GameLogger.error(
                         "Failed to load image resource: " + resourcePath
                                 + (cause != null ? " (" + cause.getMessage() + ")" : "")
                                 + ". Using fallback image."
@@ -75,7 +75,7 @@ public final class ImageAssets {
 
             return image;
         } catch (IllegalArgumentException exception) {
-            System.err.println("Invalid image path: " + resourcePath + ". Using fallback image.");
+            GameLogger.error("Invalid image path: " + resourcePath + ". Using fallback image.");
             return FALLBACK_IMAGE;
         }
     }
@@ -96,7 +96,7 @@ public final class ImageAssets {
                 try {
                     return candidate.toUri().toURL();
                 } catch (java.net.MalformedURLException | SecurityException exception) {
-                    System.err.println("Failed to resolve image file: " + candidate + ". " + exception.getMessage());
+                    GameLogger.error("Failed to resolve image file: " + candidate + ". " + exception.getMessage());
                     return null;
                 }
             }

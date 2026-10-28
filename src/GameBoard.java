@@ -131,7 +131,7 @@ public class GameBoard extends Pane {
 
         spawnZombie(waveManager.getCurrentWaveDefinition());
         waveManager.recordSpawn();
-        System.out.println("Zombie spawned in wave " + waveManager.getCurrentWave() + ": "
+        GameLogger.info("Zombie spawned in wave " + waveManager.getCurrentWave() + ": "
                 + waveManager.getZombiesSpawnedInWave() + "/" + waveManager.getZombiesPerWave());
 
         if (!waveManager.hasMoreZombiesToSpawn()) {
@@ -142,7 +142,7 @@ public class GameBoard extends Pane {
         waveManager.finishSpawning();
         timers.stopSpawner();
 
-        System.out.println("Wave " + waveManager.getCurrentWave() + " spawn completed.");
+        GameLogger.info("Wave " + waveManager.getCurrentWave() + " spawn completed.");
     }
     public void startGameLoop(Zombie zombie) {
         Timeline timeline = new Timeline(
@@ -195,7 +195,7 @@ public class GameBoard extends Pane {
         if (plant.isDead()) {
             removePlant(plant, iterator);
             zombie.startMoving();
-            System.out.println("Plant destroyed by zombie!");
+            GameLogger.info("Plant destroyed by zombie!");
         }
         return blocked;
     }
@@ -262,7 +262,7 @@ public class GameBoard extends Pane {
                     getChildren().remove(bullet.getView());
                     bullets.remove(i);
 
-                    System.out.println("Bullet hit zombie!");
+                    GameLogger.info("Bullet hit zombie!");
 
                     if (zombie.isDead()) {
                         removeZombieAt(j);
@@ -298,14 +298,14 @@ public class GameBoard extends Pane {
         zombie.stopAllActions();
         getChildren().remove(zombie.getView());
         zombies.remove(zombieIndex);
-        System.out.println("Zombie died!");
+        GameLogger.info("Zombie died!");
     }
     private void scheduleCurrentWaveStart(double delaySeconds, String announcement) {
         stopWaveStartDelay();
         waveManager.markWaveInProgress();
 
         if (announcement != null && !announcement.isEmpty()) {
-            System.out.println(announcement);
+            GameLogger.info(announcement);
         }
 
         timers.scheduleWaveStart(delaySeconds, this::beginCurrentWave);
@@ -316,7 +316,7 @@ public class GameBoard extends Pane {
             return;
         }
 
-        System.out.println("Starting wave " + waveManager.getCurrentWave());
+        GameLogger.info("Starting wave " + waveManager.getCurrentWave());
         startZombieSpawner();
     }
 
@@ -360,7 +360,7 @@ public class GameBoard extends Pane {
     public void checkGameOver(Zombie zombie) {
         if (zombie.getView().getTranslateX() <= 0) {
             endGameAsLost();
-            System.out.println("GAME OVER! A zombie reached the house.");
+            GameLogger.info("GAME OVER! A zombie reached the house.");
         }
     }
 
@@ -375,7 +375,7 @@ public class GameBoard extends Pane {
             }
 
             resources.addSun(25);
-            System.out.println("Sun points: " + resources.getSunPoints());
+            GameLogger.info("Sun points: " + resources.getSunPoints());
         });
     }
     public int getSunPoints() {
@@ -412,12 +412,12 @@ public class GameBoard extends Pane {
     public void setSelectedPlantType(PlantType type) {
         deactivateCageMode();
         this.selectedPlantType = type;
-        System.out.println("Selected plant: " + type.getIdentifier());
+        GameLogger.info("Selected plant: " + type.getIdentifier());
     }
     public void setSelectedPlantType(String type) {
         PlantType.tryFromIdentifier(type).ifPresentOrElse(
                 this::setSelectedPlantType,
-                () -> System.err.println("Unknown plant type selection '" + type + "'. Keeping current selection.")
+                () -> GameLogger.error("Unknown plant type selection '" + type + "'. Keeping current selection.")
         );
     }
     public PlantType getSelectedPlantType() {
@@ -430,7 +430,7 @@ public class GameBoard extends Pane {
         return PlantType.tryFromIdentifier(plantType)
                 .map(this::isOnCooldown)
                 .orElseGet(() -> {
-                    System.err.println("Unknown plant type cooldown lookup '" + plantType + "'. Returning false.");
+                    GameLogger.error("Unknown plant type cooldown lookup '" + plantType + "'. Returning false.");
                     return false;
                 });
     }
@@ -440,7 +440,7 @@ public class GameBoard extends Pane {
         }
 
         resources.addSun(amount);
-        System.out.println("Sun points: " + resources.getSunPoints());
+        GameLogger.info("Sun points: " + resources.getSunPoints());
     }
     public void spawnSunFromPlant(Plant plant) {
         spawnSunFromPlant(plant, 25);
@@ -454,8 +454,8 @@ public class GameBoard extends Pane {
         double y = plant.getCenterY();
 
         // target near the sun counter area
-        double targetX = 20;
-        double targetY = -150;
+        double targetX = BoardMetrics.SUN_COUNTER_X;
+        double targetY = BoardMetrics.SUN_COUNTER_Y;
 
         Sun sun = new Sun(x, y, targetX, targetY, amount);
         sun.getView().setMouseTransparent(true);
@@ -471,7 +471,7 @@ public class GameBoard extends Pane {
         }
 
         resources.addWater(amount);
-        System.out.println("Water points: " + resources.getWaterPoints());
+        GameLogger.info("Water points: " + resources.getWaterPoints());
     }
     public void spawnWaterDropFromPlant(Plant plant) {
         if (isMatchEnded() || plant == null || plant.isInfected()) {
@@ -505,7 +505,7 @@ public class GameBoard extends Pane {
         return PlantType.tryFromIdentifier(plantType)
                 .map(this::getRemainingCooldownMillis)
                 .orElseGet(() -> {
-                    System.err.println("Unknown plant type cooldown lookup '" + plantType + "'. Returning 0.");
+                    GameLogger.error("Unknown plant type cooldown lookup '" + plantType + "'. Returning 0.");
                     return 0L;
                 });
     }
@@ -554,7 +554,7 @@ public class GameBoard extends Pane {
     public void startNextWave() {
         if (waveManager.isLastWave()) {
             endGameAsWon();
-            System.out.println("All waves completed! YOU WON!");
+            GameLogger.info("All waves completed! YOU WON!");
             return;
         }
 
@@ -683,7 +683,7 @@ public class GameBoard extends Pane {
         return PlantType.tryFromIdentifier(type)
                 .map(plantType -> placePlant(plantType, row, col, false))
                 .orElseGet(() -> {
-                    System.err.println("Unknown plant type '" + type + "'. Plant placement cancelled.");
+                    GameLogger.error("Unknown plant type '" + type + "'. Plant placement cancelled.");
                     return null;
                 });
     }
@@ -712,20 +712,20 @@ public class GameBoard extends Pane {
         BoardCell cell = cells[row][col];
 
         if (cell.hasGrave()) {
-            System.out.println("Cannot place a plant on a grave.");
+            GameLogger.info("Cannot place a plant on a grave.");
             return null;
         }
 
         if (cell.isOccupied()) {
             if (cell.getOccupant().isInfected()) {
-                System.out.println("Cannot place or fuse on an infected plant.");
+                GameLogger.info("Cannot place or fuse on an infected plant.");
                 return null;
             }
             return tryFusePlant(cell);
         }
 
         if (isOnCooldown(selectedPlantType)) {
-            System.out.println(selectedPlantType.getIdentifier() + " is on cooldown!");
+            GameLogger.info(selectedPlantType.getIdentifier() + " is on cooldown!");
             return null;
         }
 
@@ -744,7 +744,7 @@ public class GameBoard extends Pane {
         startShooting(plant);
         plant.onPlaced(this);
 
-        System.out.println("Placed " + selectedPlantType.getIdentifier() + " at row " + row + ", col " + col);
+        GameLogger.info("Placed " + selectedPlantType.getIdentifier() + " at row " + row + ", col " + col);
 
         return plant;
     }
@@ -754,12 +754,12 @@ public class GameBoard extends Pane {
 
         // Polymorphism: the plant itself says whether it accepts this fusion.
         if (!occupant.canFuseWith(selectedPlantType)) {
-            System.out.println("This plant cannot be fused with " + selectedPlantType.getIdentifier() + ".");
+            GameLogger.info("This plant cannot be fused with " + selectedPlantType.getIdentifier() + ".");
             return null;
         }
 
         if (isOnCooldown(selectedPlantType)) {
-            System.out.println(selectedPlantType.getIdentifier() + " is on cooldown!");
+            GameLogger.info(selectedPlantType.getIdentifier() + " is on cooldown!");
             return null;
         }
 
@@ -771,13 +771,13 @@ public class GameBoard extends Pane {
         applyCooldownFor(selectedPlantType);
         occupant.fuse();
 
-        System.out.println("Fused " + selectedPlantType.getIdentifier() + " at row " + cell.getRow() + ", col " + cell.getCol());
+        GameLogger.info("Fused " + selectedPlantType.getIdentifier() + " at row " + cell.getRow() + ", col " + cell.getCol());
         return occupant;
     }
 
     private boolean hasEnoughResources(PlantType plantType) {
         if (!resources.canAfford(plantType)) {
-            System.out.println("Not enough resources!");
+            GameLogger.info("Not enough resources!");
             return false;
         }
 
@@ -786,7 +786,7 @@ public class GameBoard extends Pane {
 
     private boolean hasEnoughResources(int sunCost, int waterCost) {
         if (!resources.canAfford(sunCost, waterCost)) {
-            System.out.println("Not enough resources!");
+            GameLogger.info("Not enough resources!");
             return false;
         }
 
