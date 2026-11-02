@@ -28,8 +28,8 @@ public class GameBoard extends Pane {
     private List<WaterDrop> waterDrops = new ArrayList<>();
     private GameState gameState = GameState.RUNNING;
     private PlantType selectedPlantType = PlantType.PEA_SHOOTER;
-    private final MatchTimers timers = new MatchTimers();
-    private final CageAbility cage = new CageAbility();
+    private final MatchTimers timers;
+    private final CageAbility cage;
     private final ResourceManager resources;
     private final WaveManager waveManager;
     private BoardCell[][] cells = new BoardCell[ROWS][COLUMNS];
@@ -37,21 +37,26 @@ public class GameBoard extends Pane {
     private Consumer<Plant> plantRemovedHandler;
     private boolean disposed;
     
-    //Constructor
-    public GameBoard() {
-        this(Levels.create(LevelType.DAY), Difficulty.MEDIUM);
-    }
-
-    public GameBoard(Level level) {
-        this(level, Difficulty.MEDIUM);
-    }
-
-    public GameBoard(Level level, Difficulty difficulty) {
+    // Constructor (Dependency Inversion Principle):
+    // GameBoard does NOT create its helpers with "new". The client (GameApp)
+    // creates them and injects them here, so GameBoard only uses them.
+    public GameBoard(Level level,
+                     Difficulty difficulty,
+                     ResourceManager resources,
+                     WaveManager waveManager,
+                     MatchTimers timers,
+                     CageAbility cage) {
+        if (level == null || difficulty == null || resources == null
+                || waveManager == null || timers == null || cage == null) {
+            throw new IllegalArgumentException("GameBoard dependencies must not be null.");
+        }
         this.level = level;
-        this.difficulty = difficulty != null ? difficulty : Difficulty.MEDIUM;
-        this.difficultySettings = this.difficulty.getSettings();
-        resources = new ResourceManager(difficultySettings.getStartingSun(), difficultySettings.getStartingWater());
-        waveManager = new WaveManager(WaveManager.createDefaultWaves(), difficultySettings.getSpawnIntervalMultiplier());
+        this.difficulty = difficulty;
+        this.difficultySettings = difficulty.getSettings();
+        this.resources = resources;
+        this.waveManager = waveManager;
+        this.timers = timers;
+        this.cage = cage;
         setPrefSize(COLUMNS * CELL_WIDTH, ROWS * CELL_HEIGHT);
         setPickOnBounds(false);
         initializeCells();

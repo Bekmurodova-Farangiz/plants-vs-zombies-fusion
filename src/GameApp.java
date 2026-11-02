@@ -640,7 +640,7 @@ public class GameApp extends Application {
 
         Level level = Levels.create(levelType);
         LevelVisualTheme visualTheme = level.getVisualTheme();
-        GameBoard board = new GameBoard(level, difficulty);
+        GameBoard board = createGameBoard(level, difficulty);
         boardRef[0] = board;
 
         configureBackground(globalBg, visualTheme.getBackgroundPath(), designWidth, designHeight);
@@ -930,5 +930,26 @@ public class GameApp extends Application {
         // Center the scaled game world in the window
         gameGroup.setLayoutX((scene.getWidth() - designWidth * scale) / 2);
         gameGroup.setLayoutY((scene.getHeight() - designHeight * scale) / 2);
+    }
+
+    // Dependency Inversion: GameApp (the client) decides which helper objects
+    // the match uses and injects them into GameBoard through its constructor.
+    // To change a helper (e.g. a short demo wave list), only this method changes.
+    private static GameBoard createGameBoard(Level level, Difficulty difficulty) {
+        Difficulty chosenDifficulty = difficulty != null ? difficulty : Difficulty.MEDIUM;
+        DifficultySettings settings = chosenDifficulty.getSettings();
+
+        ResourceManager resources = new ResourceManager(
+                settings.getStartingSun(),
+                settings.getStartingWater()
+        );
+        WaveManager waveManager = new WaveManager(
+                WaveManager.createDefaultWaves(),
+                settings.getSpawnIntervalMultiplier()
+        );
+        MatchTimers timers = new MatchTimers();
+        CageAbility cage = new CageAbility();
+
+        return new GameBoard(level, chosenDifficulty, resources, waveManager, timers, cage);
     }
 }
