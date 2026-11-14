@@ -592,7 +592,7 @@ public class GameBoard extends Pane {
         // then check hits once per tick.
         for (int i = bullets.size() - 1; i >= 0; i--) {
             Bullet bullet = bullets.get(i);
-            bullet.moveRight();
+            bullet.move();
 
             if (bullet.isOffScreen()) {
                 getChildren().remove(bullet.getView());
@@ -605,7 +605,7 @@ public class GameBoard extends Pane {
         for (int i = suns.size() - 1; i >= 0; i--) {
             Sun sun = suns.get(i);
 
-            sun.update();
+            sun.move();
 
             if (sun.hasReachedTarget()) {
                 addSunPoints(sun.getValue());
@@ -904,10 +904,14 @@ public class GameBoard extends Pane {
         return PolymorphismUtils.snapshotEntities(plants);
     }
 
-    // Parametric polymorphism with an interface type: the same list abstraction stores Movable objects.
+    // Interface polymorphism: unrelated classes (Zombie, Bullet, Sun) all implement Movable,
+    // so one List<Movable> can hold them together (like the Payable example in the slides).
+    // WaterDrop is intentionally NOT Movable: it only fades, it never moves (ISP / LSP).
     public List<Movable> getMovableEntities() {
         List<Movable> movableEntities = new ArrayList<>();
         movableEntities.addAll(zombies);
+        movableEntities.addAll(bullets);
+        movableEntities.addAll(suns);
         return movableEntities;
     }
 

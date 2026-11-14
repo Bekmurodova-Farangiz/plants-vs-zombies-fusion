@@ -1,7 +1,7 @@
 import javafx.scene.image.Image;
 import javafx.scene.image.ImageView;
 
-public class Sun {
+public class Sun implements Movable {
 
     private static final Image SUN_IMAGE = ImageAssets.load("/assets/sun.png");
 
@@ -30,7 +30,9 @@ public class Sun {
         this.value = value;
     }
 
-    public void update() {
+    // Movable: each tick the sun flies a little closer to the sun counter.
+    @Override
+    public void move() {
         double currentX = view.getTranslateX();
         double currentY = view.getTranslateY();
 

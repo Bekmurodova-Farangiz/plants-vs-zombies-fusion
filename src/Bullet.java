@@ -1,7 +1,7 @@
 import javafx.scene.image.Image;
 import javafx.scene.image.ImageView;
 
-public class Bullet {
+public class Bullet implements Movable {
 
     private static final Image BULLET_IMAGE = ImageAssets.load("/assets/bullet.png");
 
@@ -29,6 +29,12 @@ public class Bullet {
 
     public int getDamage() {
         return damage;
+    }
+
+    // Movable: a bullet always flies to the right, so move() delegates to moveRight().
+    @Override
+    public void move() {
+        moveRight();
     }
 
     public void moveRight() {
