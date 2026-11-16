@@ -130,12 +130,7 @@ public class GameApp extends Application {
         winRestartButton.setStyle("-fx-font-size: 18px;");
         winRestartButton.setVisible(false);
 
-        Button winMenuButton = new Button();
-        ImageView winMenuIcon = new ImageView(ImageAssets.load("/assets/menu_icon.png"));
-        winMenuIcon.setFitWidth(55);
-        winMenuIcon.setFitHeight(55);
-        winMenuButton.setGraphic(winMenuIcon);
-        winMenuButton.setStyle("-fx-background-color: transparent; -fx-padding: 0;");
+        Button winMenuButton = createIconButton("/assets/menu_icon.png", 55);
         winMenuButton.setVisible(false);
 
         VBox winOverlay = new VBox(winLabel, winRestartButton, winMenuButton);
@@ -143,30 +138,12 @@ public class GameApp extends Application {
         winOverlay.setAlignment(Pos.CENTER);
         winOverlay.setVisible(false);
 
-        ImageView pauseIcon = new ImageView(ImageAssets.load("/assets/pause_icon.png"));
-        pauseIcon.setFitWidth(100);
-        pauseIcon.setFitHeight(100);
+        Button pauseButton = createIconButton("/assets/pause_icon.png", 100);
 
-        Button pauseButton = new Button();
-        pauseButton.setGraphic(pauseIcon);
-        pauseButton.setStyle("-fx-background-color: transparent; -fx-padding: 0;");
-
-        ImageView resumeIcon = new ImageView(ImageAssets.load("/assets/resume_icon.png"));
-        resumeIcon.setFitWidth(100);
-        resumeIcon.setFitHeight(100);
-
-        Button resumeButton = new Button();
-        resumeButton.setGraphic(resumeIcon);
-        resumeButton.setStyle("-fx-background-color: transparent; -fx-padding: 0;");
+        Button resumeButton = createIconButton("/assets/resume_icon.png", 100);
         resumeButton.setVisible(false);
 
-        ImageView menuIcon = new ImageView(ImageAssets.load("/assets/menu_icon.png"));
-        menuIcon.setFitWidth(100);
-        menuIcon.setFitHeight(100);
-
-        Button mainMenuButton = new Button();
-        mainMenuButton.setGraphic(menuIcon);
-        mainMenuButton.setStyle("-fx-background-color: transparent; -fx-padding: 0;");
+        Button mainMenuButton = createIconButton("/assets/menu_icon.png", 100);
 
         pauseButton.setFocusTraversable(false);
         resumeButton.setFocusTraversable(false);
@@ -174,36 +151,11 @@ public class GameApp extends Application {
         restartButton.setFocusTraversable(false);
         gameOverMenuButton.setFocusTraversable(false);
 
-        PlantCard peaShooterCard = new PlantCard(
-                PlantType.PEA_SHOOTER.getIdentifier(),
-                PlantType.PEA_SHOOTER.getImagePath(),
-                PlantType.PEA_SHOOTER.getSunCost(),
-                PlantType.PEA_SHOOTER.getWaterCost()
-        );
-        PlantCard wallPlantCard = new PlantCard(
-                PlantType.WALL_PLANT.getIdentifier(),
-                PlantType.WALL_PLANT.getImagePath(),
-                PlantType.WALL_PLANT.getSunCost(),
-                PlantType.WALL_PLANT.getWaterCost()
-        );
-        PlantCard sunflowerCard = new PlantCard(
-                PlantType.SUNFLOWER.getIdentifier(),
-                PlantType.SUNFLOWER.getImagePath(),
-                PlantType.SUNFLOWER.getSunCost(),
-                PlantType.SUNFLOWER.getWaterCost()
-        );
-        PlantCard waterPlantCard = new PlantCard(
-                PlantType.WATER_PLANT.getIdentifier(),
-                PlantType.WATER_PLANT.getImagePath(),
-                PlantType.WATER_PLANT.getSunCost(),
-                PlantType.WATER_PLANT.getWaterCost()
-        );
-        PlantCard bombPlantCard = new PlantCard(
-                PlantType.BOMB_PLANT.getIdentifier(),
-                PlantType.BOMB_PLANT.getImagePath(),
-                PlantType.BOMB_PLANT.getSunCost(),
-                PlantType.BOMB_PLANT.getWaterCost()
-        );
+        PlantCard peaShooterCard = createPlantCard(PlantType.PEA_SHOOTER);
+        PlantCard wallPlantCard = createPlantCard(PlantType.WALL_PLANT);
+        PlantCard sunflowerCard = createPlantCard(PlantType.SUNFLOWER);
+        PlantCard waterPlantCard = createPlantCard(PlantType.WATER_PLANT);
+        PlantCard bombPlantCard = createPlantCard(PlantType.BOMB_PLANT);
         PlantCard cageCard = new PlantCard(
                 CAGE_CARD_ID,
                 CAGE_IMAGE_PATH,
@@ -935,6 +887,28 @@ public class GameApp extends Application {
     // Dependency Inversion: GameApp (the client) decides which helper objects
     // the match uses and injects them into GameBoard through its constructor.
     // To change a helper (e.g. a short demo wave list), only this method changes.
+    // Divide and conquer: one helper builds every plant card (written once, reused for each PlantType).
+    private static PlantCard createPlantCard(PlantType type) {
+        return new PlantCard(
+                type.getIdentifier(),
+                type.getImagePath(),
+                type.getSunCost(),
+                type.getWaterCost()
+        );
+    }
+
+    // Divide and conquer: one helper builds every round image button (pause, resume, menu).
+    private static Button createIconButton(String imagePath, double size) {
+        ImageView icon = new ImageView(ImageAssets.load(imagePath));
+        icon.setFitWidth(size);
+        icon.setFitHeight(size);
+
+        Button button = new Button();
+        button.setGraphic(icon);
+        button.setStyle("-fx-background-color: transparent; -fx-padding: 0;");
+        return button;
+    }
+
     private static GameBoard createGameBoard(Level level, Difficulty difficulty) {
         Difficulty chosenDifficulty = difficulty != null ? difficulty : Difficulty.MEDIUM;
         DifficultySettings settings = chosenDifficulty.getSettings();
