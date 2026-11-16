@@ -13,7 +13,7 @@ public final class PolymorphismUtils {
 
     public static <T> void printEntities(List<T> entities) {
         for (T entity : entities) {
-            System.out.println(entity.getClass().getSimpleName());
+            GameLogger.info(entity.getClass().getSimpleName());
         }
     }
 }
