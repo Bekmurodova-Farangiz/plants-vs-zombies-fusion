@@ -18,6 +18,18 @@ import javafx.stage.Stage;
 
 public class GameApp extends Application {
 
+    // Window and layout sizes (symbolic constants instead of magic numbers).
+    private static final double INITIAL_WINDOW_WIDTH = 1400;
+    private static final double INITIAL_WINDOW_HEIGHT = 900;
+    private static final double BATTLEFIELD_HEIGHT = 700;
+    private static final double BOARD_OFFSET_X = 40;
+    private static final double BOARD_OFFSET_Y = -15;
+    private static final double WAVE_BOX_X = 1200;
+    private static final double WAVE_BOX_Y = 640;
+    private static final double WIN_OVERLAY_X = 600;
+    private static final double WIN_OVERLAY_Y = 220;
+    private static final double LAYOUT_SPACING = 10;
+
     @Override
     public void start(Stage stage) {
         try {
@@ -146,7 +158,7 @@ public class GameApp extends Application {
         });
 
         // Window size
-        Scene scene = new Scene(root, 1400, 900);
+        Scene scene = new Scene(root, INITIAL_WINDOW_WIDTH, INITIAL_WINDOW_HEIGHT);
 
         // Scale the whole game world together whenever width changes
         scene.widthProperty().addListener((obs, oldVal, newVal) -> {
@@ -195,16 +207,17 @@ public class GameApp extends Application {
         board.setPlantRemovedHandler(boardView::removePlantFromCell);
             
         Pane battlefieldPane = new Pane();
-        battlefieldPane.setPrefSize(designWidth, 700);
+        battlefieldPane.setPrefSize(designWidth, BATTLEFIELD_HEIGHT);
         battlefieldPane.setStyle("-fx-background-color: transparent;");
-        Rectangle battlefieldTint = createBattlefieldTint(board.getLevel(), designWidth, 700);
-        Pane atmosphereLayer = createAtmosphereLayer(board.getLevel(), designWidth, 700);
+        Rectangle battlefieldTint = createBattlefieldTint(board.getLevel(), designWidth, BATTLEFIELD_HEIGHT);
+        Pane atmosphereLayer = createAtmosphereLayer(board.getLevel(), designWidth, BATTLEFIELD_HEIGHT);
 
-        boardView.setLayoutX(40);
-        boardView.setLayoutY(-15);
+        // The grid (view) and the board (game objects) sit exactly on top of each other.
+        boardView.setLayoutX(BOARD_OFFSET_X);
+        boardView.setLayoutY(BOARD_OFFSET_Y);
 
-        board.setLayoutX(40);
-        board.setLayoutY(-15);
+        board.setLayoutX(BOARD_OFFSET_X);
+        board.setLayoutY(BOARD_OFFSET_Y);
         board.setPickOnBounds(false);
 
         if (battlefieldTint != null) {
@@ -215,15 +228,15 @@ public class GameApp extends Application {
         }
         battlefieldPane.getChildren().addAll(boardView, board, waveBox, winOverlay, gameOverOverlay);
 
-        waveBox.setLayoutX(1200);
-        waveBox.setLayoutY(640);
+        waveBox.setLayoutX(WAVE_BOX_X);
+        waveBox.setLayoutY(WAVE_BOX_Y);
 
-        winOverlay.setLayoutX(600);
-        winOverlay.setLayoutY(220);
+        winOverlay.setLayoutX(WIN_OVERLAY_X);
+        winOverlay.setLayoutY(WIN_OVERLAY_Y);
         gameOverOverlay.relocate(0, 0);
 
         VBox layout = new VBox(hud.getTopBar(), battlefieldPane);
-        layout.setSpacing(10);
+        layout.setSpacing(LAYOUT_SPACING);
         layout.setAlignment(Pos.TOP_LEFT);
         layout.setPadding(new Insets(0, 0, 0, 0));
         layout.setPrefSize(designWidth, designHeight);
