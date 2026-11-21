@@ -5,7 +5,8 @@ public enum ZombieType {
     FAST,
     FAT,
     TANK,
-    PARASITE;
+    PARASITE,
+    SUMMONER;
 
     public static ZombieType fromIdentifier(String identifier) {
         return tryFromIdentifier(identifier)

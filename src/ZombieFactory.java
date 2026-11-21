@@ -12,6 +12,7 @@ public final class ZombieFactory {
         registerZombie(ZombieType.FAT, FatZombie::new);
         registerZombie(ZombieType.TANK, TankZombie::new);
         registerZombie(ZombieType.PARASITE, ParasiteZombie::new);
+        registerZombie(ZombieType.SUMMONER, SummonZombie::new);
     }
 
     private ZombieFactory() {

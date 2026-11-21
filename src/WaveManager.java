@@ -34,11 +34,11 @@ public final class WaveManager {
         List<Wave> defaultWaves = new ArrayList<>();
 
         // Wave 1 (easy)
-        defaultWaves.add(new Wave(6, 4.5, probabilities(0.85, 0.15, 0.0, 0.0, 0.0)));
+        defaultWaves.add(new Wave(6, 4.5, probabilities(0.85, 0.15, 0.0, 0.0, 0.0, 0.0)));
         // Wave 2 (medium)
-        defaultWaves.add(new Wave(10, 3.0, probabilities(0.45, 0.25, 0.20, 0.0, 0.10)));
+        defaultWaves.add(new Wave(10, 3.0, probabilities(0.40, 0.25, 0.20, 0.0, 0.10, 0.05)));
         // Wave 3 (hard)
-        defaultWaves.add(new Wave(14, 2.2, probabilities(0.30, 0.20, 0.20, 0.15, 0.15)));
+        defaultWaves.add(new Wave(14, 2.2, probabilities(0.25, 0.20, 0.20, 0.15, 0.10, 0.10)));
 
         return defaultWaves;
     }
@@ -48,7 +48,8 @@ public final class WaveManager {
             double fastChance,
             double fatChance,
             double tankChance,
-            double parasiteChance
+            double parasiteChance,
+            double summonerChance
     ) {
         Map<ZombieType, Double> probabilities = new EnumMap<>(ZombieType.class);
         probabilities.put(ZombieType.NORMAL, normalChance);
@@ -56,6 +57,7 @@ public final class WaveManager {
         probabilities.put(ZombieType.FAT, fatChance);
         probabilities.put(ZombieType.TANK, tankChance);
         probabilities.put(ZombieType.PARASITE, parasiteChance);
+        probabilities.put(ZombieType.SUMMONER, summonerChance);
         return probabilities;
     }
 
